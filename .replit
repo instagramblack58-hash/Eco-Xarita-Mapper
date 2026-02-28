@@ -68,3 +68,9 @@ task = "shell.exec"
 args = "npm run expo:dev"
 waitForPort = 8081
 ensurePreviewReachable = "/status"
+
+[userenv]
+
+[userenv.shared]
+EXPO_PUBLIC_SUPABASE_URL = "https://ougpgsfopkewpkncbmna.supabase.co"
+EXPO_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91Z3Bnc2ZvcGtld3BrbmNibW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNTgyODYsImV4cCI6MjA4NzgzNDI4Nn0.AhaE5nELUyzl_BB_5EJg7EGLNmpval3unX7E-1tVzJ0"
