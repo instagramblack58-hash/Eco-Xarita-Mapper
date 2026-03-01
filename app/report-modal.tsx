@@ -140,7 +140,7 @@ export default function ReportModal() {
       Alert.alert("Xato", "Muammo tavsifini kiriting");
       return;
     }
-    if (!lat || !lng) {
+    if (lat === 0 && lng === 0) {
       Alert.alert("Xato", "Joylashuv aniqlanmadi");
       return;
     }

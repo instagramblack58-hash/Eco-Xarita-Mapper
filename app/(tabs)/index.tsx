@@ -1,12 +1,12 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useMemo } from "react";
 import {
   StyleSheet,
   View,
   Text,
   TouchableOpacity,
   Platform,
-  Alert,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -52,7 +52,6 @@ html, body, #map { width: 100%; height: 100%; }
 .badge-blue { background: #E3F2FD; color: #1565C0; }
 .btn { background: #2E7D32; color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; flex: 1; }
 .close-btn { background: #f0f0f0; color: #333; border: none; border-radius: 8px; padding: 10px 12px; font-size: 13px; cursor: pointer; }
-.fab { position: fixed; bottom: 24px; right: 16px; width: 52px; height: 52px; border-radius: 26px; background: #2E7D32; box-shadow: 0 4px 12px rgba(46,125,50,0.4); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 999; border: none; font-size: 24px; color: white; }
 </style>
 </head>
 <body>
@@ -65,32 +64,22 @@ html, body, #map { width: 100%; height: 100%; }
     <button class="btn" id="popup-action-btn"></button>
   </div>
 </div>
-<button class="fab" id="fab" onclick="window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({type:'add_report', lat: currentCenter[0], lng: currentCenter[1]}))">+</button>
 
 <script src="https://api-maps.yandex.ru/2.1/?apikey=${YANDEX_KEY}&lang=uz_UZ"></script>
 <script>
-var currentCenter = [${TASHKENT_LAT}, ${TASHKENT_LNG}];
 var reports = ${reportsJson};
 var recycling = ${recyclingJson};
 var selectedItem = null;
 
 ymaps.ready(function() {
   var map = new ymaps.Map("map", {
-    center: currentCenter,
+    center: [${TASHKENT_LAT}, ${TASHKENT_LNG}],
     zoom: 12,
     controls: ["zoomControl"],
   });
 
-  map.events.add("actiontick", function() {
-    currentCenter = map.getCenter();
-  });
-
-  map.events.add("click", function(e) {
-    var coords = e.get("coords");
+  map.events.add("click", function() {
     closePopup();
-    window.ReactNativeWebView && window.ReactNativeWebView.postMessage(
-      JSON.stringify({ type: "map_click", lat: coords[0], lng: coords[1] })
-    );
   });
 
   // Add report markers
@@ -103,7 +92,8 @@ ymaps.ready(function() {
         iconColor: "#DC2626",
       }
     );
-    placemark.events.add("click", function() {
+    placemark.events.add("click", function(e) {
+      e.stopPropagation();
       showReportPopup(r);
     });
     map.geoObjects.add(placemark);
@@ -120,7 +110,8 @@ ymaps.ready(function() {
         iconColor: color,
       }
     );
-    placemark.events.add("click", function() {
+    placemark.events.add("click", function(e) {
+      e.stopPropagation();
       showRecyclingPopup(rp);
     });
     map.geoObjects.add(placemark);
@@ -204,24 +195,29 @@ export default function MapScreen() {
     },
   });
 
-  const mapHtml = buildMapHtml(
-    showLayers ? reports : [],
-    showLayers ? recyclingPoints : []
+  const mapHtml = useMemo(
+    () => buildMapHtml(
+      showLayers ? reports : [],
+      showLayers ? recyclingPoints : []
+    ),
+    [reports, recyclingPoints, showLayers]
   );
 
   const handleMessage = useCallback((event: any) => {
     try {
       const msg = JSON.parse(event.nativeEvent.data);
-      if (msg.type === "map_click" || msg.type === "add_report") {
-        router.push({
-          pathname: "/report-modal",
-          params: { lat: String(msg.lat), lng: String(msg.lng) },
-        });
-      } else if (msg.type === "open_report") {
+      if (msg.type === "open_report") {
         router.push({
           pathname: "/report-detail",
           params: { id: msg.id },
         });
+      } else if (msg.type === "directions") {
+        const url = Platform.select({
+          ios: `maps://maps.apple.com/?daddr=${msg.lat},${msg.lng}`,
+          android: `geo:${msg.lat},${msg.lng}?q=${msg.lat},${msg.lng}`,
+          default: `https://maps.google.com/?q=${msg.lat},${msg.lng}`,
+        });
+        if (url) Linking.openURL(url).catch(() => {});
       }
     } catch {}
   }, []);
@@ -266,21 +262,23 @@ export default function MapScreen() {
         </View>
       </View>
 
-      {/* Legend */}
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: "#DC2626" }]} />
-          <Text style={styles.legendText}>Muammolar</Text>
+      {/* Legend — only show when layers are on */}
+      {showLayers && (
+        <View style={styles.legend}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: "#DC2626" }]} />
+            <Text style={styles.legendText}>Muammolar</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: "#1565C0" }]} />
+            <Text style={styles.legendText}>Qog'oz</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: "#7B1FA2" }]} />
+            <Text style={styles.legendText}>Plastik</Text>
+          </View>
         </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: "#1565C0" }]} />
-          <Text style={styles.legendText}>Qog'oz</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: "#7B1FA2" }]} />
-          <Text style={styles.legendText}>Plastik</Text>
-        </View>
-      </View>
+      )}
 
       {/* Report button */}
       <View style={[styles.fab, { bottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 84 + 16 }]}>

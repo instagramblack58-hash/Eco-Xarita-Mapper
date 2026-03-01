@@ -5,6 +5,7 @@ import {
   Text,
   FlatList,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
@@ -61,6 +62,14 @@ export default function RecyclingScreen() {
   const plastic = points.filter((p) => p.type === "plastic");
   const mixed = points.filter((p) => p.type === "mixed");
 
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer, { paddingTop: topPad }]}>
+        <ActivityIndicator size="large" color={C.primary} />
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { paddingTop: topPad }]}>
       <View style={styles.header}>
@@ -107,6 +116,7 @@ export default function RecyclingScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.background },
+  loadingContainer: { alignItems: "center", justifyContent: "center" },
   header: {
     paddingHorizontal: 20,
     paddingBottom: 12,
