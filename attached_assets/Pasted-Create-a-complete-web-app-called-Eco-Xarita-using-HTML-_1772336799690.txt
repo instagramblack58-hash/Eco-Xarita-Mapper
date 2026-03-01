@@ -1,0 +1,39 @@
+Create a complete web app called "Eco-Xarita" using HTML, CSS, JavaScript, and Supabase. The app allows users to report environmental issues (illegal dumping, tree cutting) and view recycling points on a map. It must be a PWA ready for Galaxy Store packaging via Bubblewrap.
+
+Tech Stack:
+- Frontend: HTML5, CSS3, vanilla JavaScript
+- Maps: Yandex Maps JavaScript API (free tier)
+- Backend: Supabase (Auth, Database, Storage)
+- PWA: manifest.json + service worker
+
+Features:
+1. User authentication (Supabase Auth) – email/password signup/login.
+2. Interactive map (Yandex Maps) centered on Tashkent (41.2995, 69.2401), zoom 12.
+   - Two marker layers: red for reports (environmental issues), green for recycling points.
+   - Click on marker shows popup with details.
+3. Report an issue:
+   - Button opens form with description, photo upload (camera/gallery), and automatic geolocation (or manual placement).
+   - Submits to Supabase table "reports" with fields: lat, lng, description, photo_url, user_id, confirmations_count (default 0).
+4. View reports: all reports displayed as markers; popup includes description, photo thumbnail, confirmation count, and a "Confirm" button (authenticated users only). Confirm increments confirmations_count via RPC function confirm_report.
+5. Recycling points: fetch from "recycling_points" table (pre-populated with Tashkent and Fergana data). Show as green markers with popup: name, address, type (plastic/paper/glass/mixed).
+6. User profile: show user's own reports, logout.
+7. Responsive mobile-first design.
+8. PWA: manifest.json with icons, service worker caches static assets.
+9. Environment variables: SUPABASE_URL, SUPABASE_ANON_KEY, YANDEX_MAPS_API_KEY (use Replit Secrets).
+
+Supabase schema (already created – just use these tables):
+- reports: id, lat, lng, description, photo_url, user_id, created_at, confirmations_count
+- recycling_points: id, lat, lng, type, name, address, created_at
+- RPC: confirm_report (report_id)
+- Storage bucket: "report-photos" (public)
+
+Implementation details:
+- Use Supabase JS client v2.
+- For Yandex Maps, load script: https://api-maps.yandex.ru/2.1/?apikey=YOUR_KEY&lang=uz_UZ
+- After ymaps.ready, create map and add collections for markers.
+- Photo upload: upload to storage bucket path "reports/{userId}/{timestamp}.jpg", get public URL.
+- Use async/await and error handling.
+- All UI text in Uzbek language.
+- Generate complete code for index.html, style.css, script.js, manifest.json, sw.js, and placeholder icons (inline base64 or simple PNGs).
+
+Output must be fully functional, with comments, and ready to run in Replit after setting env vars.
