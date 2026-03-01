@@ -232,13 +232,16 @@ export default function MapScreen() {
       ) : (
         <WebView
           ref={webviewRef}
-          source={{ html: mapHtml }}
+          source={{ html: mapHtml, baseUrl: "https://yandex.ru" }}
           style={styles.map}
           onMessage={handleMessage}
           javaScriptEnabled
           domStorageEnabled
           mixedContentMode="always"
           allowsInlineMediaPlayback
+          originWhitelist={["*"]}
+          allowUniversalAccessFromFileURLs
+          allowFileAccess
         />
       )}
 
