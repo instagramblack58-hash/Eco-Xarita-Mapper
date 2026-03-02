@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo } from "react";
+import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -7,6 +7,7 @@ import {
   Platform,
   ActivityIndicator,
   Linking,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -23,9 +24,63 @@ const TASHKENT_LAT = 41.2995;
 const TASHKENT_LNG = 69.2401;
 const YANDEX_KEY = process.env.EXPO_PUBLIC_YANDEX_MAPS_KEY ?? "";
 
+// JSON uchun xavfsiz qilish (apostrof va qo‘shtirnoqlarni escape qilish)
+function safeStringify(data: any[]): string {
+  const escaped = data.map(item => ({
+    ...item,
+    description: item.description?.replace(/'/g, "\\'").replace(/"/g, '\\"') || '',
+    name: item.name?.replace(/'/g, "\\'").replace(/"/g, '\\"') || '',
+    address: item.address?.replace(/'/g, "\\'").replace(/"/g, '\\"') || '',
+    photo_url: item.photo_url || '',
+  }));
+  return JSON.stringify(escaped);
+}
+
+// Soddalashtirilgan HTML (faqat xarita) – diagnostika uchun
+function simpleMapHtml(): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <style>body,html,#map{width:100%;height:100%;margin:0;padding:0;overflow:hidden;}</style>
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=${YANDEX_KEY}&lang=uz_UZ"></script>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    window.onerror = function(msg, url, line) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'error',
+        message: msg + ' at ' + url + ':' + line
+      }));
+    };
+    ymaps.ready(() => {
+      try {
+        const map = new ymaps.Map('map', {
+          center: [${TASHKENT_LAT}, ${TASHKENT_LNG}],
+          zoom: 12
+        });
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'log',
+          message: 'Xarita yaratildi'
+        }));
+      } catch (e) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'error',
+          message: e.toString()
+        }));
+      }
+    });
+  </script>
+</body>
+</html>`;
+}
+
+// To‘liq HTML (markerlar bilan) – xavfsiz JSON ishlatiladi
 function buildMapHtml(reports: Report[], recycling: RecyclingPoint[]): string {
-  const reportsJson = JSON.stringify(reports);
-  const recyclingJson = JSON.stringify(recycling);
+  const reportsJson = safeStringify(reports);
+  const recyclingJson = safeStringify(recycling);
 
   return `<!DOCTYPE html>
 <html>
@@ -48,7 +103,6 @@ html, body, #map { width: 100%; height: 100%; }
 .popup img { width: 100%; height: 140px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; }
 .popup-row { display: flex; gap: 8px; align-items: center; }
 .badge { background: #E8F5E9; color: #2E7D32; font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
-.badge-orange { background: #FFF3E0; color: #E65100; }
 .badge-blue { background: #E3F2FD; color: #1565C0; }
 .btn { background: #2E7D32; color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; flex: 1; }
 .close-btn { background: #f0f0f0; color: #333; border: none; border-radius: 8px; padding: 10px 12px; font-size: 13px; cursor: pointer; }
@@ -67,100 +121,115 @@ html, body, #map { width: 100%; height: 100%; }
 
 <script src="https://api-maps.yandex.ru/2.1/?apikey=${YANDEX_KEY}&lang=uz_UZ"></script>
 <script>
+// Xatolarni React Native ga yuborish
+window.onerror = function(msg, url, line) {
+  window.ReactNativeWebView.postMessage(JSON.stringify({
+    type: 'error',
+    message: msg + ' at ' + line
+  }));
+  return true;
+};
+
+console.log = function(msg) {
+  window.ReactNativeWebView.postMessage(JSON.stringify({
+    type: 'log',
+    message: msg
+  }));
+};
+
 var reports = ${reportsJson};
 var recycling = ${recyclingJson};
-var selectedItem = null;
+console.log('Reports:', reports.length, 'Recycling:', recycling.length);
 
 ymaps.ready(function() {
-  var map = new ymaps.Map("map", {
-    center: [${TASHKENT_LAT}, ${TASHKENT_LNG}],
-    zoom: 12,
-    controls: ["zoomControl"],
-  });
-
-  map.events.add("click", function() {
-    closePopup();
-  });
-
-  // Add report markers
-  reports.forEach(function(r) {
-    var placemark = new ymaps.Placemark(
-      [r.lat, r.lng],
-      { hintContent: r.description },
-      {
-        preset: "islands#redIcon",
-        iconColor: "#DC2626",
-      }
-    );
-    placemark.events.add("click", function(e) {
-      e.stopPropagation();
-      showReportPopup(r);
+  try {
+    var map = new ymaps.Map("map", {
+      center: [${TASHKENT_LAT}, ${TASHKENT_LNG}],
+      zoom: 12,
+      controls: ["zoomControl"],
     });
-    map.geoObjects.add(placemark);
-  });
 
-  // Add recycling markers
-  recycling.forEach(function(rp) {
-    var color = rp.type === "paper" ? "#1565C0" : rp.type === "plastic" ? "#7B1FA2" : "#2E7D32";
-    var placemark = new ymaps.Placemark(
-      [rp.lat, rp.lng],
-      { hintContent: rp.name },
-      {
-        preset: "islands#circleIcon",
-        iconColor: color,
+    map.events.add("click", closePopup);
+
+    // Hisobot markerlari
+    reports.forEach(function(r, index) {
+      try {
+        var placemark = new ymaps.Placemark(
+          [r.lat, r.lng],
+          { hintContent: r.description },
+          { preset: "islands#redIcon", iconColor: "#DC2626" }
+        );
+        placemark.events.add("click", function(e) {
+          e.stopPropagation();
+          showReportPopup(r);
+        });
+        map.geoObjects.add(placemark);
+      } catch (e) {
+        console.log('Error adding report marker ' + index + ': ' + e.toString());
       }
-    );
-    placemark.events.add("click", function(e) {
-      e.stopPropagation();
-      showRecyclingPopup(rp);
     });
-    map.geoObjects.add(placemark);
-  });
+
+    // Qayta ishlash markerlari
+    recycling.forEach(function(rp, index) {
+      try {
+        var color = rp.type === "paper" ? "#1565C0" : rp.type === "plastic" ? "#7B1FA2" : "#2E7D32";
+        var placemark = new ymaps.Placemark(
+          [rp.lat, rp.lng],
+          { hintContent: rp.name },
+          { preset: "islands#circleIcon", iconColor: color }
+        );
+        placemark.events.add("click", function(e) {
+          e.stopPropagation();
+          showRecyclingPopup(rp);
+        });
+        map.geoObjects.add(placemark);
+      } catch (e) {
+        console.log('Error adding recycling marker ' + index + ': ' + e.toString());
+      }
+    });
+
+    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ready' }));
+  } catch (e) {
+    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'error', message: e.toString() }));
+  }
 });
 
 function showReportPopup(r) {
-  selectedItem = r;
   var content = "";
   if (r.photo_url) {
     content += '<img src="' + r.photo_url + '" onerror="this.style.display=\'none\'" />';
   }
   content += '<div class="popup-row" style="margin-bottom:8px">';
-  content += '<span class="badge">' + r.confirmations_count + ' tasdiqlandi</span>';
-  content += '<span style="font-size:11px;color:#999;margin-left:auto">' + new Date(r.created_at).toLocaleDateString("uz-UZ") + '</span>';
+  content += '<span class="badge">' + (r.confirmations_count || 0) + ' tasdiqlandi</span>';
+  content += '<span style="font-size:11px;color:#999;margin-left:auto">' + (r.created_at ? new Date(r.created_at).toLocaleDateString("uz-UZ") : '') + '</span>';
   content += '</div>';
-  content += '<h3>Muammo xabari</h3><p>' + r.description + '</p>';
+  content += '<h3>Muammo xabari</h3><p>' + (r.description || '') + '</p>';
   document.getElementById("popup-content").innerHTML = content;
   document.getElementById("popup-action-btn").textContent = "Batafsil";
   document.getElementById("popup-action-btn").onclick = function() {
-    window.ReactNativeWebView && window.ReactNativeWebView.postMessage(
-      JSON.stringify({ type: "open_report", id: r.id })
-    );
+    window.ReactNativeWebView.postMessage(JSON.stringify({ type: "open_report", id: r.id }));
   };
   document.getElementById("popup").classList.add("visible");
 }
 
 function showRecyclingPopup(rp) {
-  selectedItem = rp;
-  var typeLabel = rp.type === "paper" ? "Qog\\'oz" : rp.type === "plastic" ? "Plastik" : "Aralash";
-  var badgeClass = rp.type === "paper" ? "badge-blue" : rp.type === "plastic" ? "" : "";
+  var typeLabel = rp.type === "paper" ? "Qog'oz" : rp.type === "plastic" ? "Plastik" : "Aralash";
+  var badgeClass = rp.type === "paper" ? "badge-blue" : "";
   var content = '<div class="popup-row" style="margin-bottom:8px">';
   content += '<span class="badge ' + badgeClass + '">' + typeLabel + '</span>';
   content += '</div>';
-  content += '<h3>' + rp.name + '</h3>';
-  content += '<p>' + rp.address + '</p>';
+  content += '<h3>' + (rp.name || '') + '</h3>';
+  content += '<p>' + (rp.address || '') + '</p>';
   document.getElementById("popup-content").innerHTML = content;
-  document.getElementById("popup-action-btn").textContent = "Yo\\'nalish";
+  document.getElementById("popup-action-btn").textContent = "Yo'nalish";
   document.getElementById("popup-action-btn").onclick = function() {
-    window.ReactNativeWebView && window.ReactNativeWebView.postMessage(
-      JSON.stringify({ type: "directions", lat: rp.lat, lng: rp.lng })
-    );
+    window.ReactNativeWebView.postMessage(JSON.stringify({ type: "directions", lat: rp.lat, lng: rp.lng }));
   };
   document.getElementById("popup").classList.add("visible");
 }
 
 function closePopup() {
   document.getElementById("popup").classList.remove("visible");
-  selectedItem = null;
 }
 </script>
 </body>
@@ -171,9 +240,10 @@ export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const webviewRef = useRef<WebView>(null);
   const [showLayers, setShowLayers] = useState(true);
+  const [useSimpleHtml, setUseSimpleHtml] = useState(false);
 
   const { data: reports = [], isLoading: reportsLoading } = useQuery<Report[]>({
-    queryKey: ["/api/reports"],
+    queryKey: ["reports"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reports")
@@ -185,7 +255,7 @@ export default function MapScreen() {
   });
 
   const { data: recyclingPoints = [] } = useQuery<RecyclingPoint[]>({
-    queryKey: ["/api/recycling"],
+    queryKey: ["recycling"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("recycling_points")
@@ -195,17 +265,26 @@ export default function MapScreen() {
     },
   });
 
-  const mapHtml = useMemo(
-    () => buildMapHtml(
-      showLayers ? reports : [],
-      showLayers ? recyclingPoints : []
-    ),
-    [reports, recyclingPoints, showLayers]
-  );
+  // Ma'lumotlar sonini konsolga chiqarish
+  useEffect(() => {
+    console.log(`Reports: ${reports.length}, Recycling: ${recyclingPoints.length}`);
+  }, [reports, recyclingPoints]);
+
+  const mapHtml = useMemo(() => {
+    if (useSimpleHtml) {
+      return simpleMapHtml();
+    } else {
+      return buildMapHtml(
+        showLayers ? reports : [],
+        showLayers ? recyclingPoints : []
+      );
+    }
+  }, [reports, recyclingPoints, showLayers, useSimpleHtml]);
 
   const handleMessage = useCallback((event: any) => {
     try {
       const msg = JSON.parse(event.nativeEvent.data);
+      console.log("📩 WebView message:", msg);
       if (msg.type === "open_report") {
         router.push({
           pathname: "/report-detail",
@@ -218,8 +297,21 @@ export default function MapScreen() {
           default: `https://maps.google.com/?q=${msg.lat},${msg.lng}`,
         });
         if (url) Linking.openURL(url).catch(() => {});
+      } else if (msg.type === "error") {
+        console.error("❌ WebView JS xatosi:", msg.message);
+        Alert.alert("Xarita xatosi", msg.message);
+      } else if (msg.type === "log") {
+        console.log("📝 WebView log:", msg.message);
       }
-    } catch {}
+    } catch (e) {
+      console.warn("Message parsing error", e);
+    }
+  }, []);
+
+  const handleWebViewError = useCallback((syntheticEvent: any) => {
+    const { nativeEvent } = syntheticEvent;
+    console.error("❌ WebView onError:", nativeEvent);
+    Alert.alert("WebView xatosi", JSON.stringify(nativeEvent));
   }, []);
 
   return (
@@ -232,9 +324,10 @@ export default function MapScreen() {
       ) : (
         <WebView
           ref={webviewRef}
-          source={{ html: mapHtml, baseUrl: "https://yandex.ru" }}
+          source={{ html: mapHtml }}
           style={styles.map}
           onMessage={handleMessage}
+          onError={handleWebViewError}
           javaScriptEnabled
           domStorageEnabled
           mixedContentMode="always"
@@ -242,7 +335,28 @@ export default function MapScreen() {
           originWhitelist={["*"]}
           allowUniversalAccessFromFileURLs
           allowFileAccess
+          onLoad={() => console.log("✅ WebView yuklandi")}
         />
+      )}
+
+      {/* Debug tugmasi (faqat rivojlantirish vaqtida) */}
+      {__DEV__ && (
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            top: insets.top + 50,
+            right: 10,
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            padding: 8,
+            borderRadius: 8,
+            zIndex: 1000,
+          }}
+          onPress={() => setUseSimpleHtml(!useSimpleHtml)}
+        >
+          <Text style={{ color: '#fff' }}>
+            Simple HTML: {useSimpleHtml ? 'ON' : 'OFF'}
+          </Text>
+        </TouchableOpacity>
       )}
 
       {/* Header */}
@@ -265,8 +379,8 @@ export default function MapScreen() {
         </View>
       </View>
 
-      {/* Legend — only show when layers are on */}
-      {showLayers && (
+      {/* Legend */}
+      {showLayers && !useSimpleHtml && (
         <View style={styles.legend}>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: "#DC2626" }]} />

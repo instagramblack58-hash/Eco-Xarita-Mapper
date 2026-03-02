@@ -1,0 +1,81 @@
+Create a complete, production-ready, and highly professional mobile app called "Eco-Xarita" (Eco Map) using Expo (React Native with TypeScript) and Expo Router (file-based routing). The app is designed to be the most user-friendly and comprehensive environmental tool in Uzbekistan, allowing citizens to report environmental issues (illegal dumping, tree cutting) and instantly locate recycling points, waste bins, and eco-friendly facilities across the entire territory of Uzbekistan. The app must be ready for Galaxy Store packaging via Bubblewrap and offer an exceptional user experience with innovative features.
+
+**Tech Stack:**
+- Frontend: Expo SDK 52, React Native 0.76, TypeScript
+- Navigation: Expo Router (tabs, modals, dynamic routes)
+- Backend: Supabase (PostgreSQL, Auth, Storage, Realtime)
+- Maps: Yandex Maps JavaScript API (via WebView) – must work seamlessly across all Uzbekistan, with offline tile caching
+- State Management: TanStack Query (React Query) + React Context (Auth)
+- UI: Custom styles with Nunito font, fully responsive, mobile-first design, smooth animations
+- Additional Libraries: expo-location, expo-image-picker, expo-notifications, expo-sharing, react-native-qrcode-svg (for sharing), haversine-distance, react-native-svg (for badges)
+
+**Core Features (Must be fully implemented and tested):**
+
+1. **User Authentication (Supabase Auth)**
+   - Email/password signup and login with email confirmation.
+   - Optional: Google Sign-In (if configured).
+   - Persistent session, auto-login, and secure logout.
+   - Auth context provider with user profile data.
+
+2. **Interactive Map (Yandex Maps via WebView) – The Heart of the App**
+   - Default view centered on Uzbekistan (41.0, 69.0) with zoom level covering the whole country.
+   - Multiple marker layers with clear colors and icons:
+     - 🔴 Red: User-submitted environmental reports (illegal dumping, tree cutting, etc.)
+     - 🔵 Blue: Paper recycling points
+     - 🟣 Purple: Plastic recycling points
+     - 🟢 Green: Mixed waste recycling points
+     - 🟡 Orange: Glass recycling points
+     - ⚫ Black: Hazardous waste (batteries, electronics) collection points
+     - 🗑️ Special marker for **public waste bins** (with sub-types: plastic, paper, glass, general) – these are displayed as small bin icons.
+   - Click on any marker opens a beautifully designed bottom sheet popup with:
+     - For reports: description, photo thumbnail, confirmation count, date, and "Batafsil" button.
+     - For recycling points/waste bins: name, address, type, distance from user (if location available), and "Yo'nalish" button.
+   - "Yo'nalish" button opens the native maps app (Apple Maps/Google Maps) with turn-by-turn directions to the selected point.
+   - Map tap closes any open popup.
+   - Layer toggle button (top right) to show/hide all markers, with a quick filter menu to select specific marker types.
+   - Legend (bottom left) dynamically updates based on active layers, showing only the colors of visible markers.
+   - **User location** displayed as a blue dot on the map (with permission). When user taps the location button, map centers on their current position.
+   - **Clustering** for markers when zoomed out to avoid clutter (using Yandex Maps built-in clustering or custom implementation).
+
+3. **Report an Issue – Effortless and Rich**
+   - FAB button (+) opens a multi-step modal (`report-modal.tsx`):
+     - Step 1: Select issue type (dropdown with icons: illegal dumping, tree cutting, water pollution, air pollution, other).
+     - Step 2: Take a photo (camera) or choose from gallery (using expo-image-picker).
+     - Step 3: Add description (optional, but encouraged).
+     - Step 4: Confirm location (auto-fetched, but user can adjust by dragging a pin on a mini-map).
+   - Submits to Supabase table `reports` with: lat, lng, description, photo_url, user_id, created_at, confirmations_count (default 0), issue_type.
+   - After submission, user gets a confirmation and can share the report on social media.
+
+4. **View Reports List (`reports.tsx` tab) – Smart and Engaging**
+   - List of all reports with:
+     - Photo thumbnail
+     - Issue type icon and description preview
+     - Confirmation count
+     - Time ago (e.g., "2 soat oldin")
+     - Distance from user (if location enabled)
+   - Tapping a report opens detail screen (`report-detail.tsx`) with:
+     - Full-size image (zoomable)
+     - Full description
+     - Issue type
+     - Map view showing the exact location
+     - Confirmation button (increments via RPC)
+     - Share button to share the report via social media or messaging apps
+     - Comments section (future enhancement, but UI placeholder)
+   - Pull-to-refresh and infinite scroll (React Query pagination).
+
+5. **Recycling Points & Waste Bins (`recycling.tsx` tab) – Intelligent Discovery**
+   - Fetch from `recycling_points` table (pre-populated with extensive data for all regions – see below).
+   - Additionally, fetch from `waste_bins` table (new table for public bins) with similar fields.
+   - Display as a list with:
+     - Type badge (color-coded)
+     - Name and address
+     - Distance from user (calculated via Haversine formula)
+     - Quick action: "Yo'nalish" (opens maps) and "Info" (opens detail).
+   - Sort by nearest first, with option to sort by type.
+   - Filter by type (paper, plastic, glass, mixed, hazardous, bins).
+   - Search by name or address.
+   - On item tap: opens detail modal with:
+     - Map view centered on the point
+     - Full details
+     - "Yo'nalish" button
+     - Option to report incorrect information (flagging system).
