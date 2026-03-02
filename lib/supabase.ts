@@ -10,6 +10,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+export type IssueType =
+  | "illegal_dumping"
+  | "tree_cutting"
+  | "water_pollution"
+  | "air_pollution"
+  | "other";
+
 export type Report = {
   id: string;
   lat: number;
@@ -19,13 +26,30 @@ export type Report = {
   user_id: string;
   created_at: string;
   confirmations_count: number;
+  issue_type: IssueType | null;
 };
+
+export type RecyclingType =
+  | "paper"
+  | "plastic"
+  | "mixed"
+  | "glass"
+  | "hazardous";
 
 export type RecyclingPoint = {
   id: string;
   lat: number;
   lng: number;
-  type: "paper" | "plastic" | "mixed";
+  type: RecyclingType;
+  name: string;
+  address: string;
+};
+
+export type WasteBin = {
+  id: string;
+  lat: number;
+  lng: number;
+  bin_type: "plastic" | "paper" | "glass" | "general";
   name: string;
   address: string;
 };

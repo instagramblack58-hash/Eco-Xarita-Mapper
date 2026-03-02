@@ -29,7 +29,7 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Nunito_400Regular,
     Nunito_600SemiBold,
     Nunito_700Bold,
@@ -37,12 +37,12 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (fontsLoaded) {
+    if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded && !fontError) return null;
 
   return (
     <ErrorBoundary>

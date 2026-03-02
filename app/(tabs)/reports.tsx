@@ -8,18 +8,24 @@ import {
   Image,
   RefreshControl,
   Platform,
-  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/context/AuthContext";
-import type { Report } from "@/lib/supabase";
+import type { Report, IssueType } from "@/lib/supabase";
 import Colors from "@/constants/colors";
 
 const C = Colors.light;
+
+const ISSUE_CONFIG: Record<IssueType, { label: string; color: string; bg: string; icon: string }> = {
+  illegal_dumping: { label: "Noqonuniy axlat", color: "#DC2626", bg: "#FEE2E2", icon: "trash-outline" },
+  tree_cutting: { label: "Daraxt kesish", color: "#16A34A", bg: "#DCFCE7", icon: "leaf-outline" },
+  water_pollution: { label: "Suv ifloslanishi", color: "#2563EB", bg: "#DBEAFE", icon: "water-outline" },
+  air_pollution: { label: "Havo ifloslanishi", color: "#7C3AED", bg: "#EDE9FE", icon: "cloud-outline" },
+  other: { label: "Boshqa muammo", color: "#D97706", bg: "#FEF3C7", icon: "alert-circle-outline" },
+};
 
 function timeAgo(dateStr: string): string {
   const now = new Date();
@@ -32,25 +38,8 @@ function timeAgo(dateStr: string): string {
 }
 
 function ReportCard({ report }: { report: Report }) {
-  const { user } = useAuth();
-  const qc = useQueryClient();
-
-  const confirmMutation = useMutation({
-    mutationFn: async () => {
-      if (!user) {
-        router.push("/auth");
-        return;
-      }
-      const { error } = await supabase.rpc("confirm_report", { report_id: report.id });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["/api/reports"] });
-    },
-    onError: (err: any) => {
-      Alert.alert("Xato", err.message ?? "Tasdiqlab bo'lmadi");
-    },
-  });
+  const issueKey = (report.issue_type ?? "other") as IssueType;
+  const cfg = ISSUE_CONFIG[issueKey] ?? ISSUE_CONFIG.other;
 
   return (
     <TouchableOpacity
@@ -61,30 +50,31 @@ function ReportCard({ report }: { report: Report }) {
       {report.photo_url ? (
         <Image source={{ uri: report.photo_url }} style={styles.cardImage} />
       ) : (
-        <View style={styles.cardImagePlaceholder}>
-          <Ionicons name="image-outline" size={32} color={C.border} />
+        <View style={[styles.cardImagePlaceholder, { backgroundColor: cfg.bg }]}>
+          <Ionicons name={cfg.icon as any} size={36} color={cfg.color} />
         </View>
       )}
       <View style={styles.cardBody}>
-        <Text style={styles.cardDesc} numberOfLines={2}>{report.description}</Text>
-        <Text style={styles.cardTime}>{timeAgo(report.created_at)}</Text>
+        <View style={styles.badgeRow}>
+          <View style={[styles.badge, { backgroundColor: cfg.bg }]}>
+            <Ionicons name={cfg.icon as any} size={12} color={cfg.color} />
+            <Text style={[styles.badgeText, { color: cfg.color }]}>{cfg.label}</Text>
+          </View>
+          <Text style={styles.cardTime}>{timeAgo(report.created_at)}</Text>
+        </View>
+        {!!report.description && report.description !== cfg.label && (
+          <Text style={styles.cardDesc} numberOfLines={2}>{report.description}</Text>
+        )}
         <View style={styles.cardFooter}>
-          <TouchableOpacity
-            style={styles.confirmBtn}
-            onPress={(e) => {
-              e.stopPropagation();
-              confirmMutation.mutate();
-            }}
-            disabled={confirmMutation.isPending}
-          >
-            <Ionicons name="checkmark-circle" size={16} color={C.primary} />
+          <View style={styles.confirmChip}>
+            <Ionicons name="checkmark-circle" size={14} color={C.primary} />
             <Text style={styles.confirmCount}>{report.confirmations_count}</Text>
             <Text style={styles.confirmLabel}>tasdiqlash</Text>
-          </TouchableOpacity>
+          </View>
           <View style={styles.locationChip}>
-            <Ionicons name="location-outline" size={13} color={C.textSecondary} />
+            <Ionicons name="location-outline" size={12} color={C.textSecondary} />
             <Text style={styles.locationText}>
-              {report.lat.toFixed(4)}, {report.lng.toFixed(4)}
+              {report.lat.toFixed(3)}, {report.lng.toFixed(3)}
             </Text>
           </View>
         </View>
@@ -134,15 +124,11 @@ export default function ReportsScreen() {
           { paddingBottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 84 + 16 },
         ]}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={C.primary}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={C.primary} />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <MaterialCommunityIcons name="alert-outline" size={48} color={C.border} />
+            <Ionicons name="alert-circle-outline" size={52} color={C.border} />
             <Text style={styles.emptyTitle}>Muammolar yo'q</Text>
             <Text style={styles.emptySub}>Birinchi bo'lib xabar bering!</Text>
           </View>
@@ -163,21 +149,12 @@ const styles = StyleSheet.create({
     borderBottomColor: C.border,
     backgroundColor: C.surface,
   },
-  headerTitle: {
-    fontFamily: "Nunito_800ExtraBold",
-    fontSize: 26,
-    color: C.text,
-  },
-  headerSub: {
-    fontFamily: "Nunito_400Regular",
-    fontSize: 13,
-    color: C.textSecondary,
-    marginTop: 2,
-  },
+  headerTitle: { fontFamily: "Nunito_800ExtraBold", fontSize: 26, color: C.text },
+  headerSub: { fontFamily: "Nunito_400Regular", fontSize: 13, color: C.textSecondary, marginTop: 2 },
   list: { padding: 16, gap: 12 },
   card: {
     backgroundColor: C.surface,
-    borderRadius: 14,
+    borderRadius: 16,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -189,65 +166,46 @@ const styles = StyleSheet.create({
   cardImagePlaceholder: {
     width: "100%",
     height: 100,
-    backgroundColor: "#F3F4F6",
     alignItems: "center",
     justifyContent: "center",
   },
-  cardBody: { padding: 14 },
+  cardBody: { padding: 14, gap: 8 },
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  badgeText: { fontFamily: "Nunito_600SemiBold", fontSize: 11 },
+  cardTime: { fontFamily: "Nunito_400Regular", fontSize: 11, color: C.textSecondary },
   cardDesc: {
-    fontFamily: "Nunito_600SemiBold",
+    fontFamily: "Nunito_400Regular",
     fontSize: 14,
     color: C.text,
     lineHeight: 20,
-    marginBottom: 4,
-  },
-  cardTime: {
-    fontFamily: "Nunito_400Regular",
-    fontSize: 12,
-    color: C.textSecondary,
-    marginBottom: 10,
   },
   cardFooter: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  confirmBtn: {
+  confirmChip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
     backgroundColor: "#E8F5E9",
-    paddingVertical: 5,
-    paddingHorizontal: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
     borderRadius: 20,
   },
-  confirmCount: {
-    fontFamily: "Nunito_700Bold",
-    fontSize: 13,
-    color: C.primary,
-  },
-  confirmLabel: {
-    fontFamily: "Nunito_400Regular",
-    fontSize: 12,
-    color: C.primary,
-  },
+  confirmCount: { fontFamily: "Nunito_700Bold", fontSize: 12, color: C.primary },
+  confirmLabel: { fontFamily: "Nunito_400Regular", fontSize: 12, color: C.primary },
   locationChip: { flexDirection: "row", alignItems: "center", gap: 3 },
-  locationText: {
-    fontFamily: "Nunito_400Regular",
-    fontSize: 11,
-    color: C.textSecondary,
-  },
-  empty: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 80,
-    gap: 8,
-  },
-  emptyTitle: {
-    fontFamily: "Nunito_700Bold",
-    fontSize: 18,
-    color: C.text,
-  },
-  emptySub: {
-    fontFamily: "Nunito_400Regular",
-    fontSize: 14,
-    color: C.textSecondary,
-  },
+  locationText: { fontFamily: "Nunito_400Regular", fontSize: 11, color: C.textSecondary },
+  empty: { alignItems: "center", paddingTop: 80, gap: 8 },
+  emptyTitle: { fontFamily: "Nunito_700Bold", fontSize: 18, color: C.text },
+  emptySub: { fontFamily: "Nunito_400Regular", fontSize: 14, color: C.textSecondary },
 });

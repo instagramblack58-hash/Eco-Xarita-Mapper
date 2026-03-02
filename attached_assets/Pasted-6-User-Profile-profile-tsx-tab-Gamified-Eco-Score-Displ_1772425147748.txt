@@ -1,0 +1,66 @@
+6. **User Profile (`profile.tsx` tab) – Gamified Eco-Score**
+   - Display user's email and avatar (from Gravatar or placeholder).
+   - **Eco-Score**: Points accumulated for reporting issues (10 pts per report) and confirming others' reports (1 pt per confirm). Show level badge (e.g., "Eko-Faol", "Tabiat Himoyachisi").
+   - Statistics: Total reports submitted, total confirmations received, total confirmations given.
+   - List of user's own reports with quick actions (edit, delete).
+   - "My Saved Locations" – users can bookmark recycling points or waste bins for quick access.
+   - Logout button.
+
+7. **Notifications (Push and In-App)**
+   - When a user's report is confirmed by others, send a push notification (using Expo Notifications) or at least in-app notification.
+   - When a new recycling point is added nearby, notify interested users.
+   - Use Supabase Realtime for in-app updates.
+
+8. **Offline Support & Performance**
+   - Service worker caches static assets (PWA requirement).
+   - Recycling points and reports data cached locally using React Query's persistent cache (AsyncStorage).
+   - Map tiles cached by Yandex Maps (if supported) or use offline vector tiles.
+
+9. **Galaxy Store Readiness & Production Polish**
+   - Configure `eas.json` for Android APK build (preview and production profiles).
+   - Include all necessary permissions: camera, location, internet, notifications.
+   - Splash screen and adaptive icons configured in `app.json`.
+   - Deep linking support for sharing reports.
+   - Full Uzbek language UI with correct translations.
+   - Error boundaries and graceful fallbacks.
+   - Loading skeletons and shimmer effects.
+   - Analytics (optional) – track user engagement.
+
+**Supabase Schema (Must be created via SQL script):**
+
+```sql
+-- Existing tables
+CREATE TABLE reports (...); -- as before, add issue_type text
+CREATE TABLE recycling_points (...); -- as before
+
+-- New table for waste bins
+CREATE TABLE waste_bins (
+    id BIGSERIAL PRIMARY KEY,
+    lat NUMERIC NOT NULL,
+    lng NUMERIC NOT NULL,
+    type TEXT CHECK (type IN ('plastic', 'paper', 'glass', 'mixed', 'general')),
+    location_description TEXT,
+    installed_date DATE,
+    responsible_organization TEXT,
+    photo_url TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- User profiles extension (optional)
+CREATE TABLE profiles (
+    user_id UUID REFERENCES auth.users(id) PRIMARY KEY,
+    eco_score INTEGER DEFAULT 0,
+    level INTEGER DEFAULT 1,
+    avatar_url TEXT,
+    full_name TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RPC function confirm_report (already defined)
+-- Add function to increment eco_score
+CREATE OR REPLACE FUNCTION increment_eco_score(user_id UUID, points INTEGER)
+RETURNS VOID LANGUAGE plpgsql AS $$
+BEGIN
+    UPDATE profiles SET eco_score = eco_score + points WHERE user_id = $1;
+END;
+$$;
