@@ -1,3 +1,4 @@
+import { sh } from "@/constants/shadow";
 import React, { useState, useMemo } from "react";
 import {
   StyleSheet,
@@ -376,11 +377,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 12,
     gap: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    ...sh.sm,
   },
   iconBox: {
     width: 50, height: 50,

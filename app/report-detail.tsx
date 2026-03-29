@@ -1,3 +1,4 @@
+import { sh } from "@/constants/shadow";
 import React from "react";
 import {
   StyleSheet,
@@ -294,11 +295,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    shadowColor: C.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    ...sh.green,
   },
   confirmBtnText: { fontFamily: "Nunito_700Bold", fontSize: 16, color: "#fff" },
   commentsPlaceholder: {

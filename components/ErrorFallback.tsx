@@ -1,3 +1,4 @@
+import { sh } from "@/constants/shadow";
 import React, { useState } from "react";
 import { reloadAppAsync } from "expo";
 import {
@@ -222,14 +223,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 24,
     minWidth: 200,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    ...sh.md,
   },
   buttonText: {
     fontWeight: "600",

@@ -1,3 +1,4 @@
+import { sh } from "@/constants/shadow";
 import React, { useState, useMemo } from "react";
 import {
   StyleSheet,
@@ -338,7 +339,7 @@ const styles = StyleSheet.create({
     backgroundColor: C.primary,
     alignItems: "center", justifyContent: "center",
     marginBottom: 8,
-    shadowColor: C.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
+    ...sh.greenXl,
   },
   authTitle: { fontFamily: "Nunito_800ExtraBold", fontSize: 26, color: C.text },
   authSub: { fontFamily: "Nunito_400Regular", fontSize: 14, color: C.textSecondary, textAlign: "center", lineHeight: 22 },
@@ -346,7 +347,7 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", gap: 8,
     marginTop: 8, backgroundColor: C.primary,
     paddingVertical: 14, paddingHorizontal: 28, borderRadius: 14,
-    shadowColor: C.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 5,
+    ...sh.green,
   },
   authBtnText: { fontFamily: "Nunito_700Bold", fontSize: 15, color: "#fff" },
 
@@ -355,7 +356,7 @@ const styles = StyleSheet.create({
     backgroundColor: C.surface, padding: 16,
     marginHorizontal: 14, marginTop: 14, marginBottom: 4,
     borderRadius: 18,
-    shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
+    ...sh.md,
     gap: 12,
   },
   avatar: {
@@ -374,7 +375,7 @@ const styles = StyleSheet.create({
   progressSection: {
     marginHorizontal: 14, marginBottom: 12,
     backgroundColor: C.surface, borderRadius: 14, padding: 12,
-    shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
+    ...sh.sm,
     gap: 6,
   },
   progressLabelRow: { flexDirection: "row", justifyContent: "space-between" },
@@ -387,7 +388,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1, backgroundColor: C.surface, borderRadius: 14,
     alignItems: "center", paddingVertical: 14, gap: 4,
-    shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+    ...sh.sm,
   },
   statNum: { fontFamily: "Nunito_800ExtraBold", fontSize: 22, color: C.text },
   statLabel: { fontFamily: "Nunito_400Regular", fontSize: 11, color: C.textSecondary },
@@ -395,7 +396,7 @@ const styles = StyleSheet.create({
   section: {
     marginHorizontal: 14, marginBottom: 14,
     backgroundColor: C.surface, borderRadius: 16, padding: 14,
-    shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2,
+    ...sh.sm,
   },
   sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
   sectionTitle: { fontFamily: "Nunito_700Bold", fontSize: 15, color: C.text, marginBottom: 10 },
@@ -445,7 +446,7 @@ const styles = StyleSheet.create({
   menuSection: {
     marginHorizontal: 14, marginBottom: 14,
     backgroundColor: C.surface, borderRadius: 16,
-    shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2,
+    ...sh.sm,
     overflow: "hidden",
   },
   menuItem: {

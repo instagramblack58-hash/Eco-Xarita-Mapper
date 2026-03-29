@@ -1,3 +1,4 @@
+import { sh } from "@/constants/shadow";
 import React, { useState } from "react";
 import {
   StyleSheet,
@@ -224,11 +225,7 @@ const styles = StyleSheet.create({
   },
   toggleActive: {
     backgroundColor: "#fff",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    ...sh.sm,
   },
   toggleText: {
     fontFamily: "Nunito_600SemiBold",
@@ -268,11 +265,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 8,
-    shadowColor: C.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    ...sh.green,
   },
   submitText: {
     fontFamily: "Nunito_700Bold",

@@ -1,3 +1,4 @@
+import { sh } from "@/constants/shadow";
 import React, { useState, useMemo } from "react";
 import {
   StyleSheet,
@@ -247,11 +248,7 @@ const styles = StyleSheet.create({
     width: 38, height: 38, borderRadius: 12,
     backgroundColor: C.primary,
     alignItems: "center", justifyContent: "center",
-    shadowColor: C.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 4,
+    ...sh.green,
   },
   searchBox: {
     flexDirection: "row", alignItems: "center",
@@ -280,11 +277,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 8,
-    elevation: 2,
+    ...sh.md,
   },
   cardImage: { width: 80, height: 80, resizeMode: "cover" },
   cardImagePlaceholder: {

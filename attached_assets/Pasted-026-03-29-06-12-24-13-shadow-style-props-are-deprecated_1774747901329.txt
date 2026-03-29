@@ -1,0 +1,24 @@
+026-03-29 06:12:24.13
+"shadow*" style props are deprecated. Use "boxShadow".
+2026-03-29 06:12:31.47
+props.pointerEvents is deprecated. Use style.pointerEvents
+2026-03-29 06:12:38.10
+{message: "6000ms timeout exceeded", stack: "Error: 6000ms timeout exceeded at https://9e45dd9e-7b86-484f-9ecb-25c183e12d34-00-32848pjzp81na.riker.replit.dev/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&transform.reactCompiler=true&unstable_transformProfile=hermes-stable:91831:19"}
+2026-03-29 06:12:38.10
+{message: "6000ms timeout exceeded", stack: "Error: 6000ms timeout exceeded at https://9e45dd9e-7b86-484f-9ecb-25c183e12d34-00-32848pjzp81na.riker.replit.dev/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&transform.reactCompiler=true&unstable_transformProfile=hermes-stable:91831:19"}
+2026-03-29 06:22:11.10
+Running application "main" with appParams:
+{rootTag: "#root"}
+Development-level warnings: ON. Performance optimizations: OFF.
+2026-03-29 06:22:11.10
+"shadow*" style props are deprecated. Use "boxShadow".
+2026-03-29 06:22:18.08
+props.pointerEvents is deprecated. Use style.pointerEvents
+2026-03-29 06:22:24.90
+{message: "6000ms timeout exceeded", stack: "Error: 6000ms timeout exceeded at https://9e45dd9e-7b86-484f-9ecb-25c183e12d34-00-32848pjzp81na.riker.replit.dev/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&transform.reactCompiler=true&unstable_transformProfile=hermes-stable:91831:19"}
+2026-03-29 06:22:24.90
+{message: "6000ms timeout exceeded", stack: "Error: 6000ms timeout exceeded at https://9e45dd9e-7b86-484f-9ecb-25c183e12d34-00-32848pjzp81na.riker.replit.dev/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&transform.reactCompiler=true&unstable_transformProfile=hermes-stable:91831:19"}
+2026-03-29 06:22:25.26
+Animated: `useNativeDriver` is not supported because the native animated module is missing. Falling back to JS-based animation. To resolve this, add `RCTAnimation` module to this app, or remove `useNativeDriver`. Make sure to run `bundle exec pod install` first. Read more about autolinking: https://github.com/react-native-community/cli/blob/master/docs/autolinking.md
+2026-03-29 06:23:30.43
+Disconnected from Metro (1006) To reconnect: - Ensure that Metro is running and available on the same network - Reload this app (will trigger further help if Metro cannot be connected to)
