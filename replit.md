@@ -1,33 +1,72 @@
 # Eco-Xarita
 
-An Expo React Native mobile app for reporting environmental issues and finding recycling/waste points in Uzbekistan. Built with Supabase for backend and Yandex Maps for mapping.
+A production-grade Expo React Native mobile app for reporting environmental issues and finding recycling/waste disposal points across Uzbekistan. Built with Supabase (PostgreSQL + Auth + Storage), Yandex Maps (WebView), React Query, and Nunito fonts.
 
 ## Stack
 
-- **Frontend**: Expo (React Native) with Expo Router (file-based routing)
+- **Frontend**: Expo ~54 (React Native) with Expo Router (file-based routing)
 - **Backend**: Express.js (TypeScript) on port 5000
-- **Database & Auth**: Supabase (PostgreSQL + Auth + Storage)
-- **Maps**: Yandex Maps API (via WebView)
-- **Fonts**: Nunito (Google Fonts)
-- **State**: React Query + React Context
+- **Database & Auth**: Supabase (PostgreSQL + Auth + Storage + Realtime)
+- **Maps**: Yandex Maps JS API 2.1 (via WebView + postMessage)
+- **Fonts**: Nunito (Google Fonts — Regular, SemiBold, Bold, ExtraBold)
+- **State**: React Query v5 + React Context (AuthContext)
 
 ## Features
 
+### Map (index.tsx)
 - Interactive Yandex Map centered on all of Uzbekistan (zoom 6)
 - 7 marker types: reports (red), paper (blue), plastic (purple), mixed (green), glass (orange), hazardous (dark), waste bins (cyan)
-- Layer filter panel to toggle specific marker types on/off
-- User location button (blue dot + center-on-me)
-- Clustered markers for better performance
-- Multi-step report modal with 5 issue types (illegal dumping, tree cutting, water pollution, air pollution, other)
-- Photo upload via camera or gallery
-- Share reports after submission
-- Recycling points list with search, filter by type, sort by distance (Haversine)
-- Directions button on each recycling/bin item
-- Waste bins as separate layer and list category
-- Report list with issue type badges, time ago, confirmation count
-- Report detail with issue type, share button, confirm button, map link, comments placeholder
-- Supabase Auth (email/password)
-- Full Uzbek language UI
+- Layer filter panel to toggle individual marker types on/off
+- Glassmorphism bottom-sheet popups with slide-up animation for all markers
+- User location button with re-center animation
+- Clustered markers for performance
+- Today's report count stats pill overlay
+- Live Supabase Realtime subscriptions for new reports (non-web)
+- One-tap directions from map popup
+- Refresh button to pull latest data
+
+### Reports Screen (reports.tsx)
+- Full text search by description / issue type
+- Sort: Newest, Oldest, Most Confirmed
+- Issue type badges with colored icons
+- Time-ago display
+- Pull-to-refresh
+- Empty state with CTA to create first report
+
+### Report Modal (report-modal.tsx)
+- 3-step form with progress bar
+- Step 1: Issue type selection (5 types with icons)
+- Step 2: Optional photo (camera or gallery) + description
+- Step 3: GPS location confirmation (auto-detected)
+- Share after submission via native Share API
+- Invalidates both map and reports query caches
+
+### Recycling Screen (recycling.tsx)
+- Full text search (name, address)
+- Filter tabs: All, Paper, Plastic, Mixed, Glass, Hazardous, Bins
+- Distance sorting via Haversine (after location permission)
+- Stat chips with type counts
+- Directions button per item
+
+### Profile Screen (profile.tsx)
+- Eco-score display with level badge and progress bar
+- 5 levels: Eko-boshlovchi → Eko-faol → Tabiat himoyachisi → Yashil elchi → Eko-qahramon
+- 7 achievements with lock/unlock states
+- Leaderboard (top 5 by eco-score from Supabase)
+- My recent reports (last 3)
+- Stats: report count, confirmation count, achievements count
+- Sign out with confirmation
+
+### Auth Screen (auth.tsx)
+- Email/password login and signup toggle
+- Supabase Auth integration
+
+### Report Detail (report-detail.tsx)
+- Photo hero image
+- Issue type badge
+- Confirmation count + one-tap confirm (with eco-score increment)
+- Share button
+- Map link (opens native maps app)
 
 ## Key Environment Variables
 
@@ -38,45 +77,61 @@ An Expo React Native mobile app for reporting environmental issues and finding r
 
 ## Supabase Setup
 
-Run `supabase-setup.sql` in the Supabase SQL Editor to create:
-- `reports` table with `issue_type` column
-- `recycling_points` table (paper/plastic/mixed/glass/hazardous types)
-- `waste_bins` table
-- `confirm_report` RPC function
-- Row Level Security policies
-- Pre-seeded data across Uzbekistan regions
+Run `supabase-setup.sql` in the Supabase SQL Editor to create all tables, functions, triggers, RLS policies, and seed data.
+
+**Tables created:**
+- `reports` — environmental issue reports with `issue_type` column
+- `recycling_points` — recycling centers (paper/plastic/mixed/glass/hazardous)
+- `waste_bins` — waste bin locations by type
+- `profiles` — user eco-score and level (auto-created on signup via trigger)
+- `saved_locations` — user bookmarks
+- `report_confirmations` — prevents duplicate confirmations
+
+**Functions:**
+- `confirm_report(report_id, user_id)` — upsert-safe confirmation + count update
+- `increment_eco_score(user_id, points)` — upsert with auto-level calculation
+- `handle_new_user()` — trigger to create profile on signup
 
 Also create a **Storage bucket** named `report-photos` (public) in Supabase Dashboard → Storage.
+
+**For Realtime** (live map updates): In Supabase Dashboard → Database → Replication, add `reports` table to the `supabase_realtime` publication.
 
 ## File Structure
 
 ```
 app/
-  _layout.tsx          # Root layout with providers (Auth, QueryClient, fonts)
+  _layout.tsx          # Root layout: providers, fonts, error boundary
   (tabs)/
-    _layout.tsx        # Tab layout (NativeTabs for iOS 26, classic for others)
-    index.tsx          # Map screen (Yandex Maps via WebView, all 7 layers)
-    reports.tsx        # Reports list with issue type badges
-    recycling.tsx      # Recycling + waste bins list with search/filter/distance
-    profile.tsx        # User profile and stats
-  auth.tsx             # Auth modal (login/signup)
-  report-modal.tsx     # 3-step new report modal with issue type selection
-  report-detail.tsx    # Report detail with share, confirm, map link
+    _layout.tsx        # Tab layout (NativeTabs iOS 26 / BlurView classic)
+    index.tsx          # Map screen — Yandex Maps, 7 layers, realtime
+    reports.tsx        # Reports list — search, sort, badges
+    recycling.tsx      # Recycling + bins — search, filter, distance
+    profile.tsx        # Profile — eco-score, achievements, leaderboard
+  auth.tsx             # Login/signup modal
+  report-modal.tsx     # 3-step report creation modal
+  report-detail.tsx    # Report detail — confirm, share, map link
+components/
+  ErrorBoundary.tsx    # App-level crash recovery
+  NotificationHandler.tsx  # Push notification setup (native-only)
+  KeyboardAwareScrollViewCompat.tsx
 context/
-  AuthContext.tsx      # Supabase Auth state
+  AuthContext.tsx      # Supabase session + profile state
 lib/
-  supabase.ts          # Supabase client + types (Report, RecyclingPoint, WasteBin)
-  query-client.ts      # React Query client
+  supabase.ts          # Client + types (Report, RecyclingPoint, WasteBin, Profile, SavedLocation)
+  query-client.ts      # React Query client with default fetcher
 constants/
-  colors.ts            # Green theme colors
-supabase-setup.sql     # Database setup script (run in Supabase SQL Editor)
+  colors.ts            # Green theme (#2E7D32 primary)
+supabase-setup.sql     # Full DB setup + seed data (run in Supabase SQL Editor)
 ```
 
 ## Architecture
 
-- Map is rendered via `react-native-webview` with injected Yandex Maps JS
-- WebView ↔ React Native communication via `postMessage` for marker taps
-- All 7 marker types with Yandex Maps `Clusterer` for performance
-- Photos stored in Supabase Storage bucket `report-photos`
-- `confirmations_count` updated via Supabase RPC `confirm_report`
-- Distance sorting via Haversine formula (client-side)
+- Map rendered via `react-native-webview` with full Yandex Maps HTML injected
+- WebView ↔ React Native via `postMessage` for marker taps, directions, navigation
+- All 7 marker types clustered via Yandex `Clusterer`
+- Glassmorphism bottom-sheet popup with CSS cubic-bezier slide-up animation
+- Photos stored in Supabase Storage `report-photos` bucket (public)
+- Eco-score managed via Supabase RPC with conflict-safe upserts
+- Distance sorting via client-side Haversine formula
+- Supabase Realtime channel on reports table (native only, web not supported)
+- NotificationHandler uses dynamic import so it's never loaded on web
