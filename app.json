@@ -58,6 +58,14 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Eco-Xarita geolokatsiyangizni muammoni joylashtirish uchun ishlatadi."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#2E7D32",
+          "sounds": ["./assets/sounds/notification.wav"]
+        }
       ]
     ],
     "experiments": {

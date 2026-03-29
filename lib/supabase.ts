@@ -10,6 +10,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+// ===== Types =====
+
 export type IssueType =
   | "illegal_dumping"
   | "tree_cutting"
@@ -45,11 +47,41 @@ export type RecyclingPoint = {
   address: string;
 };
 
+export type WasteBinType = "plastic" | "paper" | "glass" | "general";
+
 export type WasteBin = {
   id: string;
   lat: number;
   lng: number;
-  bin_type: "plastic" | "paper" | "glass" | "general";
+  bin_type: WasteBinType;
   name: string;
   address: string;
 };
+
+export type Profile = {
+  user_id: string;
+  eco_score: number;
+  level: number;
+  avatar_url: string | null;
+  full_name: string | null;
+  created_at: string;
+};
+
+export type SavedLocation = {
+  id: string;
+  user_id: string;
+  point_type: "recycling" | "waste_bin" | "report";
+  point_id: string;
+  note: string | null;
+  created_at: string;
+};
+
+// ===== Helpers =====
+
+export async function incrementEcoScore(userId: string, points: number) {
+  return supabase.rpc("increment_eco_score", { user_id: userId, points });
+}
+
+export async function confirmReport(reportId: string, confirmingUserId: string) {
+  return supabase.rpc("confirm_report", { report_id: reportId, confirming_user_id: confirmingUserId });
+}

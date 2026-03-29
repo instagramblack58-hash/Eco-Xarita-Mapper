@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase, confirmReport, incrementEcoScore } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import type { Report, IssueType } from "@/lib/supabase";
 import Colors from "@/constants/colors";
@@ -34,7 +34,7 @@ const ISSUE_CONFIG: Record<IssueType, { label: string; color: string; bg: string
 export default function ReportDetailScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const qc = useQueryClient();
 
   const { data: report, isLoading } = useQuery<Report>({
@@ -50,12 +50,15 @@ export default function ReportDetailScreen() {
   const confirmMutation = useMutation({
     mutationFn: async () => {
       if (!user) { router.push("/auth"); return; }
-      const { error } = await supabase.rpc("confirm_report", { report_id: id });
-      if (error) throw error;
+      await confirmReport(id, user.id);
+      await incrementEcoScore(user.id, 1); // 1 ball tasdiqlagan uchun
+      // Hisobot egasiga 1 ball (RPC da avtomatik qo'shiladi)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/reports"] });
       qc.invalidateQueries({ queryKey: ["/api/reports", id] });
+      refreshProfile();
+      Alert.alert("Muvaffaqiyatli", "Hisobot tasdiqlandi!");
     },
     onError: (err: any) => {
       Alert.alert("Xato", err.message);
@@ -139,13 +142,11 @@ export default function ReportDetailScreen() {
         )}
 
         <View style={styles.content}>
-          {/* Issue type badge */}
           <View style={[styles.issueBadge, { backgroundColor: cfg.bg }]}>
             <Ionicons name={cfg.icon as any} size={16} color={cfg.color} />
             <Text style={[styles.issueLabel, { color: cfg.color }]}>{cfg.label}</Text>
           </View>
 
-          {/* Meta row */}
           <View style={styles.metaRow}>
             <View style={styles.confirmBadge}>
               <Ionicons name="checkmark-circle" size={16} color={C.primary} />
@@ -155,7 +156,6 @@ export default function ReportDetailScreen() {
             <Text style={styles.dateText}>{date}</Text>
           </View>
 
-          {/* Description */}
           {!!report.description && (
             <>
               <Text style={styles.sectionTitle}>Muammo tavsifi</Text>
@@ -163,7 +163,6 @@ export default function ReportDetailScreen() {
             </>
           )}
 
-          {/* Location */}
           <Text style={styles.sectionTitle}>Joylashuv</Text>
           <TouchableOpacity style={styles.locationBox} onPress={openMaps} activeOpacity={0.8}>
             <Ionicons name="location" size={18} color={C.primary} />
@@ -174,7 +173,6 @@ export default function ReportDetailScreen() {
             <Ionicons name="navigate-outline" size={16} color={C.primary} />
           </TouchableOpacity>
 
-          {/* Actions */}
           <TouchableOpacity
             style={[styles.confirmBtn, confirmMutation.isPending && { opacity: 0.7 }]}
             onPress={() => {
@@ -200,7 +198,6 @@ export default function ReportDetailScreen() {
             )}
           </TouchableOpacity>
 
-          {/* Comments placeholder */}
           <View style={styles.commentsPlaceholder}>
             <Ionicons name="chatbubble-outline" size={20} color={C.textSecondary} />
             <Text style={styles.commentsText}>Izohlar tez orada qo'shiladi</Text>

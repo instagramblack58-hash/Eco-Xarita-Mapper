@@ -1,12 +1,13 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { queryClient } from "@/lib/query-client";
 import { AuthProvider } from "@/context/AuthContext";
+import { NotificationHandler } from "@/components/NotificationHandler";
 import {
   useFonts,
   Nunito_400Regular,
@@ -48,6 +49,7 @@ export default function RootLayout() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
+          <NotificationHandler />
           <GestureHandlerRootView style={{ flex: 1 }}>
             <KeyboardProvider>
               <RootLayoutNav />

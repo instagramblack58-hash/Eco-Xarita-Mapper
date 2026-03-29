@@ -3,13 +3,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "strict": true,
+    "jsx": "react-native",   // <-- shu qatorni qo'shing
     "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@shared/*": [
-        "./shared/*"
-      ]
+      "@/*": ["./*"],
+      "@shared/*": ["./shared/*"]
     }
   },
   "include": [
