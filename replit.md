@@ -27,7 +27,8 @@ A production-grade Expo React Native mobile app for reporting environmental issu
 
 ### Reports Screen (reports.tsx)
 - Full text search by description / issue type
-- Sort: Newest, Oldest, Most Confirmed
+- **Issue type filter chips** (All, Axlat, Daraxt, Suv, Havo, Boshqa) — colored active state
+- Sort: Newest, Oldest, Most Popular (confirmed)
 - Issue type badges with colored icons
 - Time-ago display
 - Pull-to-refresh
@@ -58,15 +59,32 @@ A production-grade Expo React Native mobile app for reporting environmental issu
 - Sign out with confirmation
 
 ### Auth Screen (auth.tsx)
-- Email/password login and signup toggle
-- Supabase Auth integration
+- Email/password login and signup toggle (segmented control)
+- Full name field during signup
+- Forgot password flow (sends reset email via Supabase)
+- Uzbek-localized error messages
+- Keyboard returnKeyType navigation between fields
 
 ### Report Detail (report-detail.tsx)
 - Photo hero image
 - Issue type badge
-- Confirmation count + one-tap confirm (with eco-score increment)
+- Confirmation count + one-tap confirm (with eco-score increment, +1 ball)
 - Share button
 - Map link (opens native maps app)
+- Real comments system (add, view, with author name and time-ago)
+- KeyboardAvoidingView for comment input
+
+### Settings Screen (settings.tsx)
+- App banner with version
+- 4-step how-to guide
+- Mission/about section
+- Feedback email link, privacy policy, terms links
+
+### Profile Screen (profile.tsx) — fully updated
+- Shows full_name (not email) as display name
+- Edit name inline modal with save
+- Settings navigation link in header + menu
+- Leaderboard shows full_name of users
 
 ## Key Environment Variables
 
@@ -85,6 +103,7 @@ Run `supabase-setup.sql` in the Supabase SQL Editor to create all tables, functi
 - `waste_bins` — waste bin locations by type
 - `profiles` — user eco-score and level (auto-created on signup via trigger)
 - `saved_locations` — user bookmarks
+- `report_comments` — user comments on reports (with author_name)
 - `report_confirmations` — prevents duplicate confirmations
 
 **Functions:**

@@ -31,6 +31,15 @@ export type Report = {
   issue_type: IssueType | null;
 };
 
+export type ReportComment = {
+  id: string;
+  report_id: string;
+  user_id: string;
+  text: string;
+  created_at: string;
+  author_name: string | null;
+};
+
 export type RecyclingType =
   | "paper"
   | "plastic"
@@ -84,4 +93,23 @@ export async function incrementEcoScore(userId: string, points: number) {
 
 export async function confirmReport(reportId: string, confirmingUserId: string) {
   return supabase.rpc("confirm_report", { report_id: reportId, confirming_user_id: confirmingUserId });
+}
+
+export async function getComments(reportId: string): Promise<ReportComment[]> {
+  const { data, error } = await supabase
+    .from("report_comments")
+    .select("id, report_id, user_id, text, created_at, author_name")
+    .eq("report_id", reportId)
+    .order("created_at", { ascending: true });
+  if (error) return [];
+  return data ?? [];
+}
+
+export async function addComment(reportId: string, userId: string, text: string, authorName: string | null) {
+  return supabase.from("report_comments").insert({
+    report_id: reportId,
+    user_id: userId,
+    text: text.trim(),
+    author_name: authorName,
+  });
 }

@@ -8,8 +8,10 @@ interface AuthContextValue {
   profile: Profile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUp: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: string | null }>;
+  updateName: (name: string) => Promise<{ error: string | null }>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -50,13 +52,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null };
   };
 
-  const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({ email, password });
+  const signUp = async (email: string, password: string, fullName?: string) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: fullName ? { data: { full_name: fullName } } : undefined,
+    });
+    if (!error && data.user && fullName) {
+      await supabase
+        .from("profiles")
+        .upsert({ user_id: data.user.id, full_name: fullName, eco_score: 0, level: 1 });
+    }
     return { error: error?.message ?? null };
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
+  };
+
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: "ecoxarita://reset-password",
+    });
+    return { error: error?.message ?? null };
+  };
+
+  const updateName = async (name: string) => {
+    if (!session?.user) return { error: "Tizimga kirilmagan" };
+    const { error } = await supabase
+      .from("profiles")
+      .update({ full_name: name })
+      .eq("user_id", session.user.id);
+    if (!error) await fetchProfile(session.user.id);
+    return { error: error?.message ?? null };
   };
 
   const value = useMemo(() => ({
@@ -67,6 +95,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signUp,
     signOut,
+    resetPassword,
+    updateName,
     refreshProfile,
   }), [session, profile, loading]);
 

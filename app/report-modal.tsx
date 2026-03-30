@@ -19,7 +19,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase, incrementEcoScore } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import type { IssueType } from "@/lib/supabase";
 import Colors from "@/constants/colors";
@@ -37,7 +37,7 @@ const ISSUE_TYPES: { value: IssueType; label: string; icon: string; color: strin
 
 export default function ReportModal() {
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const qc = useQueryClient();
 
   const [step, setStep] = useState(1);
@@ -153,9 +153,12 @@ export default function ReportModal() {
     if (error) {
       Alert.alert("Xato", error.message);
     } else {
+      await incrementEcoScore(user.id, 10);
       await qc.invalidateQueries({ queryKey: ["/api/reports"] });
       await qc.invalidateQueries({ queryKey: ["reports"] });
-      Alert.alert("Muvaffaqiyatli!", "Muammo xabari yuborildi. Rahmat!", [
+      await qc.invalidateQueries({ queryKey: ["/api/my-reports", user.id] });
+      refreshProfile();
+      Alert.alert("Muvaffaqiyatli! 🌱", "Muammo xabari yuborildi. +10 eko-ball!\nRahmat!", [
         {
           text: "Ulashish",
           onPress: async () => {

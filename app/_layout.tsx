@@ -32,6 +32,7 @@ function RootLayoutNav() {
       <Stack.Screen name="auth" options={{ headerShown: false, presentation: "modal" }} />
       <Stack.Screen name="report-modal" options={{ headerShown: false, presentation: "modal" }} />
       <Stack.Screen name="report-detail" options={{ headerShown: false }} />
+      <Stack.Screen name="settings" options={{ headerShown: false }} />
     </Stack>
   );
 }

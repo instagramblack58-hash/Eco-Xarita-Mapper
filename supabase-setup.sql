@@ -61,7 +61,17 @@ CREATE TABLE IF NOT EXISTS saved_locations (
   created_at timestamptz DEFAULT now()
 );
 
--- 6. Report confirmations (to prevent duplicate confirmations)
+-- 6. Report comments
+CREATE TABLE IF NOT EXISTS report_comments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  report_id uuid NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  text text NOT NULL CHECK (char_length(text) BETWEEN 1 AND 500),
+  author_name text,
+  created_at timestamptz DEFAULT now()
+);
+
+-- 7. Report confirmations (to prevent duplicate confirmations)
 CREATE TABLE IF NOT EXISTS report_confirmations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   report_id uuid NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
@@ -136,6 +146,7 @@ ALTER TABLE waste_bins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE saved_locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE report_confirmations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE report_comments ENABLE ROW LEVEL SECURITY;
 
 -- Reports: anyone reads, auth inserts own
 DROP POLICY IF EXISTS "Anyone can view reports" ON reports;
@@ -168,6 +179,14 @@ DROP POLICY IF EXISTS "Anyone can view confirmations" ON report_confirmations;
 CREATE POLICY "Anyone can view confirmations" ON report_confirmations FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Auth users can insert confirmations" ON report_confirmations;
 CREATE POLICY "Auth users can insert confirmations" ON report_confirmations FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Comments: anyone reads, auth inserts own
+DROP POLICY IF EXISTS "Anyone can view comments" ON report_comments;
+CREATE POLICY "Anyone can view comments" ON report_comments FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Auth users can insert comments" ON report_comments;
+CREATE POLICY "Auth users can insert comments" ON report_comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own comments" ON report_comments;
+CREATE POLICY "Users can delete own comments" ON report_comments FOR DELETE USING (auth.uid() = user_id);
 
 -- =============================================
 -- SEED DATA — Recycling Points (Uzbekistan)
