@@ -1,9 +1,9 @@
 entrypoint = "README.md"
-modules = ["nodejs-22"]
+modules = ["nodejs-20", "nodejs-22"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["android-tools"]
+packages = ["android-tools", "go-ios"]
 
 [deployment]
 deploymentTarget = "cloudrun"
