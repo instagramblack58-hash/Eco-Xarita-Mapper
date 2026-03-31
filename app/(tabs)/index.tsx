@@ -1,4 +1,3 @@
-import { sh } from "@/constants/shadow";
 import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import {
   StyleSheet,
@@ -25,6 +24,11 @@ const UZ_LAT = 41.0;
 const UZ_LNG = 63.0;
 const YANDEX_KEY = process.env.EXPO_PUBLIC_YANDEX_MAPS_KEY ?? "";
 
+// If Yandex key is missing, show error instead of crashing
+if (!YANDEX_KEY && __DEV__) {
+  console.error("❌ YANDEX MAPS KEY IS MISSING! Set EXPO_PUBLIC_YANDEX_MAPS_KEY in eas.json env.");
+}
+
 const LAYERS = [
   { id: "reports", label: "Muammolar", color: "#EF4444", icon: "⚠️" },
   { id: "paper", label: "Qog'oz", color: "#1D4ED8", icon: "📄" },
@@ -35,8 +39,10 @@ const LAYERS = [
   { id: "bins", label: "Qutilari", color: "#0891B2", icon: "🗑️" },
 ];
 
+// Safe escaping for JSON strings
 function esc(s: string): string {
-  return (s ?? "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/'/g, "\\'");
+  if (!s) return "";
+  return s.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/'/g, "\\'");
 }
 
 function safeJSON(data: any[]): string {
@@ -59,6 +65,11 @@ function buildMapHtml(
   userLat: number | null,
   userLng: number | null
 ): string {
+  // If no API key, return error HTML
+  if (!YANDEX_KEY) {
+    return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:sans-serif;padding:20px;text-align:center;background:#f8f9fa;color:#333}</style></head><body><h2>⚠️ Xarita yuklanmadi</h2><p>Yandex API kaliti topilmadi. Iltimos, administratorga murojaat qiling.</p></body></html>`;
+  }
+
   const filteredReports = activeLayers.has("reports") ? reports : [];
   const filteredRecycling = recycling.filter((r) => activeLayers.has(r.type));
   const filteredBins = activeLayers.has("bins") ? bins : [];
@@ -151,13 +162,6 @@ html,body,#map{width:100%;height:100%;font-family:-apple-system,'SF Pro Display'
   backdrop-filter:blur(2px);
 }
 .scrim.show{display:block;}
-
-/* Stats badge */
-.stats-badge{
-  position:fixed;bottom:0;left:0;right:0;
-  pointer-events:none;
-  z-index:500;
-}
 </style>
 </head>
 <body>
@@ -292,15 +296,14 @@ ymaps.ready(function(){
       controls:['zoomControl'],
     },{suppressMapOpenBlock:true});
 
-    map.events.add('click',function(e){
-      if(document.getElementById('popup').classList.contains('open'))return;
+    map.events.add('click',function(){
+      // just close popup if open? Already handled by scrim.
     });
 
     var clusterer=new ymaps.Clusterer({
       preset:'islands#invertedGreenClusterIcons',
       groupByCoordinates:false,
       clusterDisableClickZoom:false,
-      clusterBalloonContentLayoutWidth:400,
     });
 
     var all=[];
@@ -360,12 +363,6 @@ ymaps.ready(function(){
 window.centerOnUser=function(){
   if(userLat!==null&&userLng!==null&&window.ymapInstance){
     window.ymapInstance.setCenter([userLat,userLng],14,{duration:600});
-  }
-};
-
-window.zoomTo=function(lat,lng,zoom){
-  if(window.ymapInstance){
-    window.ymapInstance.setCenter([lat,lng],zoom||15,{duration:600});
   }
 };
 </script>
@@ -621,7 +618,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    ...sh.lg,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   appName: { fontFamily: "Nunito_800ExtraBold", fontSize: 18, color: C.text },
@@ -643,7 +644,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    ...sh.md,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
     zIndex: 150,
   },
   statsPillText: { fontFamily: "Nunito_600SemiBold", fontSize: 12, color: C.text },
@@ -653,7 +658,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 18,
     padding: 16,
-    ...sh.xl,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
     zIndex: 150,
   },
   layerPanelTitle: {
@@ -681,14 +690,22 @@ const styles = StyleSheet.create({
     width: 46, height: 46, borderRadius: 14,
     backgroundColor: "#fff",
     alignItems: "center", justifyContent: "center",
-    ...sh.md,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
   },
   fab: {
     position: "absolute", right: 16,
     width: 58, height: 58, borderRadius: 29,
     backgroundColor: C.primary,
     alignItems: "center", justifyContent: "center",
-    ...sh.greenXl,
+    shadowColor: C.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
     zIndex: 200,
   },
 });
