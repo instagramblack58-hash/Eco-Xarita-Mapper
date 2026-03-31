@@ -1,0 +1,8 @@
+node_modules
+.expo
+.eas-tmp
+.eas-cache
+.git
+android
+ios
+eas-tmp
