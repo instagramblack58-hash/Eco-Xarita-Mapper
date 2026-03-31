@@ -59,12 +59,7 @@
           "locationAlwaysAndWhenInUsePermission": "Eco-Xarita geolokatsiyangizni muammoni joylashtirish uchun ishlatadi."
         }
       ],
-      [
-        "expo-notifications",
-        {
-          "color": "#2E7D32"
-        }
-      ]
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true,

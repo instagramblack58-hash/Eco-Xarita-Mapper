@@ -1,3 +1,7 @@
+// ==================== TypeScript declarations ====================
+declare const __DEV__: boolean;
+declare module 'react-native';
+
 import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import {
   StyleSheet,
@@ -24,7 +28,6 @@ const UZ_LAT = 41.0;
 const UZ_LNG = 63.0;
 const YANDEX_KEY = process.env.EXPO_PUBLIC_YANDEX_MAPS_KEY ?? "";
 
-// If Yandex key is missing, show error instead of crashing
 if (!YANDEX_KEY && __DEV__) {
   console.error("❌ YANDEX MAPS KEY IS MISSING! Set EXPO_PUBLIC_YANDEX_MAPS_KEY in eas.json env.");
 }
@@ -39,7 +42,6 @@ const LAYERS = [
   { id: "bins", label: "Qutilari", color: "#0891B2", icon: "🗑️" },
 ];
 
-// Safe escaping for JSON strings
 function esc(s: string): string {
   if (!s) return "";
   return s.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/'/g, "\\'");
@@ -65,7 +67,6 @@ function buildMapHtml(
   userLat: number | null,
   userLng: number | null
 ): string {
-  // If no API key, return error HTML
   if (!YANDEX_KEY) {
     return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:sans-serif;padding:20px;text-align:center;background:#f8f9fa;color:#333}</style></head><body><h2>⚠️ Xarita yuklanmadi</h2><p>Yandex API kaliti topilmadi. Iltimos, administratorga murojaat qiling.</p></body></html>`;
   }
@@ -88,7 +89,6 @@ function buildMapHtml(
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body,#map{width:100%;height:100%;font-family:-apple-system,'SF Pro Display','Helvetica Neue',sans-serif;}
 
-/* Bottom Sheet Popup */
 .popup{
   position:fixed;bottom:0;left:0;right:0;
   background:#fff;
@@ -136,8 +136,6 @@ html,body,#map{width:100%;height:100%;font-family:-apple-system,'SF Pro Display'
 }
 .confirm-icon{font-size:16px;}
 .confirm-text{font-size:13px;color:#16A34A;font-weight:600;}
-
-/* Action buttons */
 .btn-row{
   display:flex;gap:10px;
   padding:12px 18px 18px;
@@ -152,8 +150,6 @@ html,body,#map{width:100%;height:100%;font-family:-apple-system,'SF Pro Display'
 .btn:active{opacity:0.8;}
 .btn-primary{background:linear-gradient(135deg,#2E7D32,#4CAF50);color:#fff;}
 .btn-secondary{background:#F3F4F6;color:#374151;}
-
-/* Overlay scrim */
 .scrim{
   position:fixed;inset:0;
   background:rgba(0,0,0,0.3);
@@ -296,9 +292,7 @@ ymaps.ready(function(){
       controls:['zoomControl'],
     },{suppressMapOpenBlock:true});
 
-    map.events.add('click',function(){
-      // just close popup if open? Already handled by scrim.
-    });
+    map.events.add('click',function(){});
 
     var clusterer=new ymaps.Clusterer({
       preset:'islands#invertedGreenClusterIcons',
@@ -379,7 +373,6 @@ export default function MapScreen() {
   const [userLat, setUserLat] = useState<number | null>(null);
   const [userLng, setUserLng] = useState<number | null>(null);
   const [mapReady, setMapReady] = useState(false);
-  const [mapStats, setMapStats] = useState({ reports: 0, recycling: 0, bins: 0 });
 
   const topPad = Platform.OS === "web" ? 67 : insets.top + 8;
   const bottomPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84 + 16;
@@ -461,7 +454,6 @@ export default function MapScreen() {
         if (url) Linking.openURL(url).catch(() => {});
       } else if (msg.type === "ready") {
         setMapReady(true);
-        setMapStats({ reports: msg.reports ?? 0, recycling: msg.recycling ?? 0, bins: msg.bins ?? 0 });
       } else if (msg.type === "error") {
         console.warn("Map error:", msg.message);
       }
@@ -506,6 +498,7 @@ export default function MapScreen() {
       <WebView
         ref={webviewRef}
         source={{ html: mapHtml }}
+        // @ts-ignore – style prop is accepted by WebView, but TypeScript types may be outdated
         style={styles.map}
         onMessage={handleMessage}
         javaScriptEnabled
@@ -518,7 +511,6 @@ export default function MapScreen() {
         scrollEnabled={false}
       />
 
-      {/* Header bar */}
       <View style={[styles.header, { paddingTop: topPad }]}>
         <View style={styles.headerCard}>
           <View style={styles.titleRow}>
@@ -539,7 +531,6 @@ export default function MapScreen() {
         </View>
       </View>
 
-      {/* Today's report stats pill */}
       {mapReady && todayReports > 0 && !showLayerPanel && (
         <View style={[styles.statsPill, { top: topPad + 64 }]}>
           <Ionicons name="alert-circle" size={13} color="#EF4444" />
@@ -547,7 +538,6 @@ export default function MapScreen() {
         </View>
       )}
 
-      {/* Layer Filter Panel */}
       {showLayerPanel && (
         <View style={[styles.layerPanel, { top: topPad + 60 }]}>
           <Text style={styles.layerPanelTitle}>Xarita qatlamlari</Text>
@@ -570,7 +560,6 @@ export default function MapScreen() {
         </View>
       )}
 
-      {/* Right floating controls */}
       <View style={[styles.rightControls, { bottom: bottomPad + 64 }]}>
         {userLat !== null && userLng !== null && (
           <TouchableOpacity style={styles.floatBtn} onPress={centerOnUser} activeOpacity={0.85}>
@@ -579,7 +568,6 @@ export default function MapScreen() {
         )}
       </View>
 
-      {/* FAB */}
       <TouchableOpacity
         style={[styles.fab, { bottom: bottomPad }]}
         onPress={() => router.push("/report-modal")}
