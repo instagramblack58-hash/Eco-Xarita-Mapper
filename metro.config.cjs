@@ -2,17 +2,16 @@ const { getDefaultConfig } = require("expo/metro-config");
 
 const config = getDefaultConfig(__dirname);
 
-// Faqat keraksiz vaqtinchalik fayllarni block listga qo'shamiz
+// Keraksiz vaqtinchalik fayllarni kuzatishdan chiqarib tashlash
 config.resolver.blockList = [
   /\.local\/.*/,       // Replit-ning ichki .local fayllari
   /\.tmp-.*/,          // Vaqtinchalik fayllar
-  // node_modules-ni bu yerdan olib tashladik!
 ];
 
-// Replit-da barqaror ishlashi uchun watchFolders-ni avtomatik aniqlashga qo'yib beramiz
+// Loyiha papkasini kuzatish
 config.watchFolders = [__dirname];
 
-// Agar sizda SVG yoki boshqa maxsus fayllar bo'lsa, quyidagilarni ham qo'shish mumkin:
+// Qoʻshimcha fayl kengaytmalarini qoʻshish
 config.resolver.sourceExts = [...config.resolver.sourceExts, 'mjs', 'cjs'];
 
 module.exports = config;
