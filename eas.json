@@ -8,9 +8,9 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_SUPABASE_URL": "https://ougpgsfopkewpkncbmna.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91Z3Bnc2ZvcGtld3BrbmNibW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNTgyODYsImV4cCI6MjA4NzgzNDI4Nn0.AhaE5nELUyzl_BB_5EJg7EGLNmpval3unX7E-1tVzJ0",
-        "EXPO_PUBLIC_YANDEX_MAPS_KEY": "48216e51-4d1c-41b0-87c7-6598392d3c28"
+        "EXPO_PUBLIC_SUPABASE_URL": "$EXPO_PUBLIC_SUPABASE_URL",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "$EXPO_PUBLIC_SUPABASE_ANON_KEY",
+        "EXPO_PUBLIC_YANDEX_MAPS_KEY": "$EXPO_PUBLIC_YANDEX_MAPS_KEY"
       }
     },
     "preview": {
@@ -19,9 +19,9 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_SUPABASE_URL": "https://ougpgsfopkewpkncbmna.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91Z3Bnc2ZvcGtld3BrbmNibW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNTgyODYsImV4cCI6MjA4NzgzNDI4Nn0.AhaE5nELUyzl_BB_5EJg7EGLNmpval3unX7E-1tVzJ0",
-        "EXPO_PUBLIC_YANDEX_MAPS_KEY": "48216e51-4d1c-41b0-87c7-6598392d3c28"
+        "EXPO_PUBLIC_SUPABASE_URL": "$EXPO_PUBLIC_SUPABASE_URL",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "$EXPO_PUBLIC_SUPABASE_ANON_KEY",
+        "EXPO_PUBLIC_YANDEX_MAPS_KEY": "$EXPO_PUBLIC_YANDEX_MAPS_KEY"
       }
     },
     "preview2": {
@@ -29,34 +29,34 @@
         "gradleCommand": ":app:assembleRelease"
       },
       "env": {
-        "EXPO_PUBLIC_SUPABASE_URL": "https://ougpgsfopkewpkncbmna.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91Z3Bnc2ZvcGtld3BrbmNibW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNTgyODYsImV4cCI6MjA4NzgzNDI4Nn0.AhaE5nELUyzl_BB_5EJg7EGLNmpval3unX7E-1tVzJ0",
-        "EXPO_PUBLIC_YANDEX_MAPS_KEY": "48216e51-4d1c-41b0-87c7-6598392d3c28"
+        "EXPO_PUBLIC_SUPABASE_URL": "$EXPO_PUBLIC_SUPABASE_URL",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "$EXPO_PUBLIC_SUPABASE_ANON_KEY",
+        "EXPO_PUBLIC_YANDEX_MAPS_KEY": "$EXPO_PUBLIC_YANDEX_MAPS_KEY"
       }
     },
     "preview3": {
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_SUPABASE_URL": "https://ougpgsfopkewpkncbmna.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91Z3Bnc2ZvcGtld3BrbmNibW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNTgyODYsImV4cCI6MjA4NzgzNDI4Nn0.AhaE5nELUyzl_BB_5EJg7EGLNmpval3unX7E-1tVzJ0",
-        "EXPO_PUBLIC_YANDEX_MAPS_KEY": "48216e51-4d1c-41b0-87c7-6598392d3c28"
+        "EXPO_PUBLIC_SUPABASE_URL": "$EXPO_PUBLIC_SUPABASE_URL",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "$EXPO_PUBLIC_SUPABASE_ANON_KEY",
+        "EXPO_PUBLIC_YANDEX_MAPS_KEY": "$EXPO_PUBLIC_YANDEX_MAPS_KEY"
       }
     },
     "preview4": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_SUPABASE_URL": "https://ougpgsfopkewpkncbmna.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91Z3Bnc2ZvcGtld3BrbmNibW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNTgyODYsImV4cCI6MjA4NzgzNDI4Nn0.AhaE5nELUyzl_BB_5EJg7EGLNmpval3unX7E-1tVzJ0",
-        "EXPO_PUBLIC_YANDEX_MAPS_KEY": "48216e51-4d1c-41b0-87c7-6598392d3c28"
+        "EXPO_PUBLIC_SUPABASE_URL": "$EXPO_PUBLIC_SUPABASE_URL",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "$EXPO_PUBLIC_SUPABASE_ANON_KEY",
+        "EXPO_PUBLIC_YANDEX_MAPS_KEY": "$EXPO_PUBLIC_YANDEX_MAPS_KEY"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_SUPABASE_URL": "https://ougpgsfopkewpkncbmna.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91Z3Bnc2ZvcGtld3BrbmNibW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNTgyODYsImV4cCI6MjA4NzgzNDI4Nn0.AhaE5nELUyzl_BB_5EJg7EGLNmpval3unX7E-1tVzJ0",
-        "EXPO_PUBLIC_YANDEX_MAPS_KEY": "48216e51-4d1c-41b0-87c7-6598392d3c28"
+        "EXPO_PUBLIC_SUPABASE_URL": "$EXPO_PUBLIC_SUPABASE_URL",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "$EXPO_PUBLIC_SUPABASE_ANON_KEY",
+        "EXPO_PUBLIC_YANDEX_MAPS_KEY": "$EXPO_PUBLIC_YANDEX_MAPS_KEY"
       }
     }
   }

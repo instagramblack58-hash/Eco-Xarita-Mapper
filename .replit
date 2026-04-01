@@ -78,9 +78,10 @@ args = "npm run expo:dev"
 waitForPort = 8081
 ensurePreviewReachable = "/status"
 
-[userenv]
-
-[userenv.shared]
-EXPO_PUBLIC_SUPABASE_URL = "https://ougpgsfopkewpkncbmna.supabase.co"
-EXPO_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91Z3Bnc2ZvcGtld3BrbmNibW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNTgyODYsImV4cCI6MjA4NzgzNDI4Nn0.AhaE5nELUyzl_BB_5EJg7EGLNmpval3unX7E-1tVzJ0"
-EXPO_PUBLIC_YANDEX_MAPS_KEY = "48216e51-4d1c-41b0-87c7-6598392d3c28"
+# The [userenv.shared] section has been removed.
+# The actual values are stored securely in Replit Secrets.
+# To set them, go to the "Secrets" tab in your Repl and add:
+#   EXPO_PUBLIC_SUPABASE_URL
+#   EXPO_PUBLIC_SUPABASE_ANON_KEY
+#   EXPO_PUBLIC_YANDEX_MAPS_KEY
+# with their respective values.
