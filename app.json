@@ -18,6 +18,9 @@
       "bundleIdentifier": "com.ecoxarita",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
+      },
+      "config": {
+        "googleMapsApiKey": "AIzaSyC577QirSQ9--k106NLC9_3ia-H8Prm0lw"
       }
     },
     "android": {
@@ -32,7 +35,12 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
-      ]
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyC577QirSQ9--k106NLC9_3ia-H8Prm0lw"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/images/favicon.png"

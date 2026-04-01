@@ -83,5 +83,5 @@ ensurePreviewReachable = "/status"
 # To set them, go to the "Secrets" tab in your Repl and add:
 #   EXPO_PUBLIC_SUPABASE_URL
 #   EXPO_PUBLIC_SUPABASE_ANON_KEY
-#   EXPO_PUBLIC_YANDEX_MAPS_KEY
+#   EXPO_PUBLIC_GOOGLE_MAPS_KEY
 # with their respective values.
