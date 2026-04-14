@@ -1,17 +1,29 @@
 const { getDefaultConfig } = require("expo/metro-config");
+const path = require("path");
 
 const config = getDefaultConfig(__dirname);
 
-// Keraksiz vaqtinchalik fayllarni kuzatishdan chiqarib tashlash
 config.resolver.blockList = [
-  /\.local\/.*/,       // Replit-ning ichki .local fayllari
-  /\.tmp-.*/,          // Vaqtinchalik fayllar
+  /\.local\/.*/,
+  /\.tmp-.*/,
 ];
 
-// Loyiha papkasini kuzatish
 config.watchFolders = [__dirname];
 
-// Qoʻshimcha fayl kengaytmalarini qoʻshish
 config.resolver.sourceExts = [...config.resolver.sourceExts, 'mjs', 'cjs'];
+
+const originalResolveRequest = config.resolver.resolveRequest;
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (platform === 'web' && moduleName === 'react-native-maps') {
+    return {
+      filePath: path.resolve(__dirname, 'lib/maps-stub.web.js'),
+      type: 'sourceFile',
+    };
+  }
+  if (originalResolveRequest) {
+    return originalResolveRequest(context, moduleName, platform);
+  }
+  return context.resolveRequest(context, moduleName, platform);
+};
 
 module.exports = config;
