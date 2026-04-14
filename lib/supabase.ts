@@ -29,6 +29,8 @@ export type Report = {
   created_at: string;
   confirmations_count: number;
   issue_type: IssueType | null;
+  verification_count?: number;
+  last_verified_at?: string | null;
 };
 
 export type ReportComment = {
@@ -54,6 +56,10 @@ export type RecyclingPoint = {
   type: RecyclingType;
   name: string;
   address: string;
+  is_verified?: boolean;
+  source?: string | null;
+  last_verified_at?: string | null;
+  verification_count?: number;
 };
 
 export type WasteBinType = "plastic" | "paper" | "glass" | "general";
@@ -65,6 +71,29 @@ export type WasteBin = {
   bin_type: WasteBinType;
   name: string;
   address: string;
+  verification_count?: number;
+  last_verified_at?: string | null;
+};
+
+export type RewardType = "cheque" | "bonus" | "discount" | "money";
+
+export type MachineStatus = "active" | "maintenance" | "inactive";
+
+export type ReverseVendingMachine = {
+  id: string;
+  lat: number;
+  lng: number;
+  name: string;
+  address: string;
+  operator: string | null;
+  reward_type: RewardType | null;
+  reward_description: string | null;
+  status: MachineStatus;
+  working_hours: string | null;
+  phone: string | null;
+  photo_url: string | null;
+  verification_count: number;
+  last_verified_at: string | null;
 };
 
 export type Profile = {
@@ -93,6 +122,18 @@ export async function incrementEcoScore(userId: string, points: number) {
 
 export async function confirmReport(reportId: string, confirmingUserId: string) {
   return supabase.rpc("confirm_report", { report_id: reportId, confirming_user_id: confirmingUserId });
+}
+
+export async function verifyPoint(
+  pointType: "report" | "recycling_point" | "waste_bin" | "reverse_vending_machine",
+  pointId: string,
+  userId: string
+) {
+  return supabase.rpc("verify_point", {
+    p_point_type: pointType,
+    p_point_id: pointId,
+    p_user_id: userId,
+  });
 }
 
 export async function getComments(reportId: string): Promise<ReportComment[]> {

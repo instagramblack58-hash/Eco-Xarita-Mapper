@@ -17,27 +17,35 @@ import { useQuery } from "@tanstack/react-query";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { supabase } from "@/lib/supabase";
-import type { RecyclingPoint, WasteBin, RecyclingType } from "@/lib/supabase";
+import type { RecyclingPoint, WasteBin, RecyclingType, ReverseVendingMachine } from "@/lib/supabase";
 import Colors from "@/constants/colors";
 
 const C = Colors.light;
 
-type FilterType = RecyclingType | "bins" | "all";
+type FilterType = RecyclingType | "bins" | "avtomatlar" | "all";
 
 const TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  paper: { label: "Qog'oz", color: "#1565C0", bg: "#E3F2FD", icon: "file-document-outline" },
-  plastic: { label: "Plastik", color: "#7B1FA2", bg: "#F3E5F5", icon: "bottle-soda-outline" },
-  mixed: { label: "Aralash", color: "#2E7D32", bg: "#E8F5E9", icon: "recycle" },
-  glass: { label: "Shisha", color: "#D97706", bg: "#FEF3C7", icon: "bottle-wine-outline" },
-  hazardous: { label: "Zararli", color: "#374151", bg: "#F3F4F6", icon: "biohazard" },
-  bins: { label: "Axlat qutilari", color: "#0891B2", bg: "#CFFAFE", icon: "trash-can-outline" },
+  paper:      { label: "Qog'oz",        color: "#1565C0", bg: "#E3F2FD", icon: "file-document-outline" },
+  plastic:    { label: "Plastik",       color: "#7B1FA2", bg: "#F3E5F5", icon: "bottle-soda-outline" },
+  mixed:      { label: "Aralash",       color: "#2E7D32", bg: "#E8F5E9", icon: "recycle" },
+  glass:      { label: "Shisha",        color: "#D97706", bg: "#FEF3C7", icon: "bottle-wine-outline" },
+  hazardous:  { label: "Zararli",       color: "#374151", bg: "#F3F4F6", icon: "biohazard" },
+  bins:       { label: "Axlat qutilari", color: "#0891B2", bg: "#CFFAFE", icon: "trash-can-outline" },
+  avtomatlar: { label: "Avtomatlar",    color: "#B45309", bg: "#FFFBEB", icon: "robot-outline" },
 };
 
 const BIN_TYPE_LABELS: Record<string, string> = {
   plastic: "Plastik quti",
-  paper: "Qog'oz quti",
-  glass: "Shisha quti",
+  paper:   "Qog'oz quti",
+  glass:   "Shisha quti",
   general: "Umumiy axlat",
+};
+
+const REWARD_TYPE_LABELS: Record<string, string> = {
+  cheque:   "Chek",
+  bonus:    "Bonus ball",
+  discount: "Chegirma",
+  money:    "Naqd pul",
 };
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -66,17 +74,21 @@ function openDirections(lat: number, lng: number, name: string) {
 
 type ListItem =
   | { kind: "recycling"; data: RecyclingPoint; dist?: number }
-  | { kind: "bin"; data: WasteBin; dist?: number };
+  | { kind: "bin"; data: WasteBin; dist?: number }
+  | { kind: "machine"; data: ReverseVendingMachine; dist?: number };
 
 function ItemCard({ item }: { item: ListItem }) {
-  const typeKey = item.kind === "recycling" ? item.data.type : "bins";
+  const typeKey = item.kind === "recycling" ? item.data.type : item.kind === "machine" ? "avtomatlar" : "bins";
   const cfg = TYPE_CONFIG[typeKey] ?? TYPE_CONFIG.mixed;
   const name = item.data.name;
   const address = item.data.address;
-  const label =
-    item.kind === "recycling"
-      ? cfg.label
-      : BIN_TYPE_LABELS[(item.data as WasteBin).bin_type] ?? "Axlat qutisi";
+
+  let label = cfg.label;
+  if (item.kind === "bin") {
+    label = BIN_TYPE_LABELS[(item.data as WasteBin).bin_type] ?? "Axlat qutisi";
+  }
+
+  const machine = item.kind === "machine" ? (item.data as ReverseVendingMachine) : null;
 
   return (
     <View style={styles.card}>
@@ -97,6 +109,21 @@ function ItemCard({ item }: { item: ListItem }) {
         {item.dist !== undefined && (
           <Text style={styles.distText}>{formatDist(item.dist)} uzoqda</Text>
         )}
+        {machine && machine.reward_description && (
+          <View style={styles.rewardRow}>
+            <MaterialCommunityIcons name="gift-outline" size={13} color="#B45309" />
+            <Text style={styles.rewardText} numberOfLines={1}>
+              {machine.reward_type ? `${REWARD_TYPE_LABELS[machine.reward_type]}: ` : ""}
+              {machine.reward_description}
+            </Text>
+          </View>
+        )}
+        {machine && machine.working_hours && (
+          <View style={styles.addressRow}>
+            <Ionicons name="time-outline" size={12} color={C.textSecondary} />
+            <Text style={styles.addressText} numberOfLines={1}>{machine.working_hours}</Text>
+          </View>
+        )}
       </View>
       <TouchableOpacity
         style={styles.dirBtn}
@@ -109,13 +136,14 @@ function ItemCard({ item }: { item: ListItem }) {
 }
 
 const FILTERS: { id: FilterType; label: string }[] = [
-  { id: "all", label: "Barchasi" },
-  { id: "paper", label: "Qog'oz" },
-  { id: "plastic", label: "Plastik" },
-  { id: "mixed", label: "Aralash" },
-  { id: "glass", label: "Shisha" },
-  { id: "hazardous", label: "Zararli" },
-  { id: "bins", label: "Qutilari" },
+  { id: "all",        label: "Barchasi" },
+  { id: "paper",      label: "Qog'oz" },
+  { id: "plastic",    label: "Plastik" },
+  { id: "mixed",      label: "Aralash" },
+  { id: "glass",      label: "Shisha" },
+  { id: "hazardous",  label: "Zararli" },
+  { id: "bins",       label: "Qutilari" },
+  { id: "avtomatlar", label: "Avtomatlar" },
 ];
 
 export default function RecyclingScreen() {
@@ -139,6 +167,18 @@ export default function RecyclingScreen() {
     queryKey: ["/api/waste_bins"],
     queryFn: async () => {
       const { data, error } = await supabase.from("waste_bins").select("*");
+      if (error) return [];
+      return data ?? [];
+    },
+  });
+
+  const { data: machines = [] } = useQuery<ReverseVendingMachine[]>({
+    queryKey: ["/api/machines"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reverse_vending_machines")
+        .select("*")
+        .eq("status", "active");
       if (error) return [];
       return data ?? [];
     },
@@ -172,11 +212,18 @@ export default function RecyclingScreen() {
       data: b,
       dist: userLoc ? haversineKm(userLoc.lat, userLoc.lng, b.lat, b.lng) : undefined,
     }));
-    let merged: ListItem[] = [...recyclingItems, ...binItems];
+    const machineItems: ListItem[] = machines.map((m) => ({
+      kind: "machine",
+      data: m,
+      dist: userLoc ? haversineKm(userLoc.lat, userLoc.lng, m.lat, m.lng) : undefined,
+    }));
+
+    let merged: ListItem[] = [...recyclingItems, ...binItems, ...machineItems];
 
     if (filter !== "all") {
       merged = merged.filter((item) => {
         if (filter === "bins") return item.kind === "bin";
+        if (filter === "avtomatlar") return item.kind === "machine";
         return item.kind === "recycling" && item.data.type === filter;
       });
     }
@@ -195,18 +242,17 @@ export default function RecyclingScreen() {
     }
 
     return merged;
-  }, [points, bins, filter, search, userLoc]);
+  }, [points, bins, machines, filter, search, userLoc]);
 
-  const counts = useMemo(() => {
-    return {
-      paper: points.filter((p) => p.type === "paper").length,
-      plastic: points.filter((p) => p.type === "plastic").length,
-      mixed: points.filter((p) => p.type === "mixed").length,
-      glass: points.filter((p) => p.type === "glass").length,
-      hazardous: points.filter((p) => p.type === "hazardous").length,
-      bins: bins.length,
-    };
-  }, [points, bins]);
+  const counts = useMemo(() => ({
+    paper:      points.filter((p) => p.type === "paper").length,
+    plastic:    points.filter((p) => p.type === "plastic").length,
+    mixed:      points.filter((p) => p.type === "mixed").length,
+    glass:      points.filter((p) => p.type === "glass").length,
+    hazardous:  points.filter((p) => p.type === "hazardous").length,
+    bins:       bins.length,
+    avtomatlar: machines.length,
+  }), [points, bins, machines]);
 
   if (isLoading) {
     return (
@@ -254,12 +300,13 @@ export default function RecyclingScreen() {
       <FlatList
         horizontal
         data={[
-          { key: "paper", num: counts.paper, color: "#1565C0", bg: "#E3F2FD", label: "Qog'oz" },
-          { key: "plastic", num: counts.plastic, color: "#7B1FA2", bg: "#F3E5F5", label: "Plastik" },
-          { key: "mixed", num: counts.mixed, color: "#2E7D32", bg: "#E8F5E9", label: "Aralash" },
-          { key: "glass", num: counts.glass, color: "#D97706", bg: "#FEF3C7", label: "Shisha" },
-          { key: "hazardous", num: counts.hazardous, color: "#374151", bg: "#F3F4F6", label: "Zararli" },
-          { key: "bins", num: counts.bins, color: "#0891B2", bg: "#CFFAFE", label: "Qutilari" },
+          { key: "paper",      num: counts.paper,      color: "#1565C0", bg: "#E3F2FD", label: "Qog'oz" },
+          { key: "plastic",    num: counts.plastic,    color: "#7B1FA2", bg: "#F3E5F5", label: "Plastik" },
+          { key: "mixed",      num: counts.mixed,      color: "#2E7D32", bg: "#E8F5E9", label: "Aralash" },
+          { key: "glass",      num: counts.glass,      color: "#D97706", bg: "#FEF3C7", label: "Shisha" },
+          { key: "hazardous",  num: counts.hazardous,  color: "#374151", bg: "#F3F4F6", label: "Zararli" },
+          { key: "bins",       num: counts.bins,       color: "#0891B2", bg: "#CFFAFE", label: "Qutilari" },
+          { key: "avtomatlar", num: counts.avtomatlar, color: "#B45309", bg: "#FFFBEB", label: "Avtomatlar" },
         ]}
         keyExtractor={(item) => item.key}
         renderItem={({ item }) => (
@@ -393,6 +440,22 @@ const styles = StyleSheet.create({
   addressRow: { flexDirection: "row", alignItems: "center", gap: 3 },
   addressText: { fontFamily: "Nunito_400Regular", fontSize: 12, color: C.textSecondary, flex: 1 },
   distText: { fontFamily: "Nunito_600SemiBold", fontSize: 12, color: C.primary },
+  rewardRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#FFFBEB",
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 8,
+    alignSelf: "flex-start",
+  },
+  rewardText: {
+    fontFamily: "Nunito_600SemiBold",
+    fontSize: 11,
+    color: "#B45309",
+    flex: 1,
+  },
   dirBtn: {
     width: 40, height: 40,
     borderRadius: 12,

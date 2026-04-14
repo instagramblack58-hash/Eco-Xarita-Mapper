@@ -83,6 +83,20 @@ export default function ProfileScreen() {
     enabled: !!user,
   });
 
+  const { data: verificationCount = 0 } = useQuery({
+    queryKey: ["/api/verifications", user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { count, error } = await supabase
+        .from("verification_audit")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      if (error) return 0;
+      return count ?? 0;
+    },
+    enabled: !!user,
+  });
+
   const { data: leaderboard = [] } = useQuery({
     queryKey: ["/api/leaderboard"],
     queryFn: async () => {
@@ -251,9 +265,14 @@ export default function ProfileScreen() {
             <Text style={styles.statLabel}>Xabarlar</Text>
           </View>
           <View style={styles.statCard}>
+            <Ionicons name="shield-checkmark" size={22} color="#7C3AED" />
+            <Text style={styles.statNum}>{verificationCount}</Text>
+            <Text style={styles.statLabel}>Tasdiqladi</Text>
+          </View>
+          <View style={styles.statCard}>
             <Ionicons name="checkmark-circle" size={22} color={C.primary} />
             <Text style={styles.statNum}>{totalConfirmations}</Text>
-            <Text style={styles.statLabel}>Tasdiqlar</Text>
+            <Text style={styles.statLabel}>Olingan</Text>
           </View>
           <View style={styles.statCard}>
             <Ionicons name="trophy" size={22} color="#F59E0B" />
@@ -334,6 +353,34 @@ export default function ProfileScreen() {
             ))}
           </View>
         )}
+
+        {/* About section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>ℹ️ Dastur haqida</Text>
+          <View style={styles.aboutRow}>
+            <Ionicons name="person-circle-outline" size={18} color={C.textSecondary} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.aboutLabel}>Muallif</Text>
+              <Text style={styles.aboutValue}>Yursinaliyev Muhammadaziz</Text>
+            </View>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.aboutRow}>
+            <Ionicons name="mail-outline" size={18} color={C.textSecondary} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.aboutLabel}>Aloqa</Text>
+              <Text style={styles.aboutValue}>yursinaliyevm@gmail.com</Text>
+            </View>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.aboutRow}>
+            <Ionicons name="leaf-outline" size={18} color={C.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.aboutLabel}>Versiya</Text>
+              <Text style={styles.aboutValue}>Eco-Xarita v1.0.0</Text>
+            </View>
+          </View>
+        </View>
 
         {/* Menu */}
         <View style={styles.menuSection}>
@@ -527,6 +574,12 @@ const styles = StyleSheet.create({
   reportContent: { flex: 1 },
   reportDesc: { fontFamily: "Nunito_600SemiBold", fontSize: 13, color: C.text },
   reportMeta: { fontFamily: "Nunito_400Regular", fontSize: 11, color: C.textSecondary, marginTop: 2 },
+
+  aboutRow: {
+    flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8,
+  },
+  aboutLabel: { fontFamily: "Nunito_400Regular", fontSize: 11, color: C.textSecondary },
+  aboutValue: { fontFamily: "Nunito_600SemiBold", fontSize: 13, color: C.text, marginTop: 1 },
 
   menuSection: {
     marginHorizontal: 14, marginBottom: 14,
