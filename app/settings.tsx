@@ -1,5 +1,5 @@
 import { sh } from "@/constants/shadow";
-import React from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   View,
@@ -9,11 +9,13 @@ import {
   Platform,
   Linking,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Colors from "@/constants/colors";
+import { useAuth } from "@/context/AuthContext";
 
 const C = Colors.light;
 const APP_VERSION = "1.0.0";
@@ -52,7 +54,7 @@ function SettingRow({
         {sublabel && <Text style={styles.rowSublabel}>{sublabel}</Text>}
       </View>
       {arrow && onPress && (
-        <Ionicons name="chevron-forward" size={16} color={C.textSecondary} />
+        <Ionicons name="chevron-forward" size={16} color={danger ? C.danger : C.textSecondary} />
       )}
     </TouchableOpacity>
   );
@@ -60,8 +62,28 @@ function SettingRow({
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
+  const { user, profile, signOut } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom + 24;
+
+  const displayName = profile?.full_name || user?.email?.split("@")[0];
+  const ecoScore = profile?.eco_score ?? 0;
+
+  const handleSignOut = () => {
+    Alert.alert("Chiqish", "Hisobdan chiqmoqchimisiz?", [
+      { text: "Bekor qilish", style: "cancel" },
+      {
+        text: "Chiqish",
+        style: "destructive",
+        onPress: async () => {
+          setSigningOut(true);
+          await signOut();
+          setSigningOut(false);
+        },
+      },
+    ]);
+  };
 
   return (
     <View style={[styles.container, { paddingTop: topPad }]}>
@@ -88,6 +110,73 @@ export default function SettingsScreen() {
             O'zbekistonda ekologik muammolarni xabarlash va qayta ishlash nuqtalarini topish uchun ilova
           </Text>
         </View>
+
+        {/* Auth section: if logged in, show user card; if not, show login CTA */}
+        {user ? (
+          <>
+            <Text style={styles.sectionHeader}>HISOB</Text>
+            <View style={styles.card}>
+              <View style={styles.accountRow}>
+                <View style={styles.accountAvatar}>
+                  <Ionicons name="person" size={22} color={C.primary} />
+                </View>
+                <View style={styles.accountInfo}>
+                  {displayName ? (
+                    <Text style={styles.accountName}>{displayName}</Text>
+                  ) : null}
+                  <Text style={styles.accountEmail} numberOfLines={1}>{user.email}</Text>
+                  <Text style={styles.accountScore}>🌿 {ecoScore} eko-ball</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.profileBtn}
+                  onPress={() => { router.back(); router.push("/(tabs)/profile"); }}
+                >
+                  <Text style={styles.profileBtnText}>Profil</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.rowDivider} />
+              <TouchableOpacity
+                style={styles.row}
+                onPress={handleSignOut}
+                disabled={signingOut}
+                activeOpacity={0.75}
+              >
+                <View style={[styles.rowIcon, { backgroundColor: "#FEE2E2" }]}>
+                  {signingOut ? (
+                    <ActivityIndicator size="small" color={C.danger} />
+                  ) : (
+                    <Ionicons name="log-out-outline" size={20} color={C.danger} />
+                  )}
+                </View>
+                <View style={styles.rowContent}>
+                  <Text style={[styles.rowLabel, { color: C.danger }]}>Hisobdan chiqish</Text>
+                  <Text style={styles.rowSublabel}>Sessiyani tugatish</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={C.danger} />
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : (
+          <>
+            <Text style={styles.sectionHeader}>HISOB</Text>
+            <View style={styles.card}>
+              <TouchableOpacity
+                style={[styles.row, { paddingVertical: 16 }]}
+                onPress={() => { router.back(); setTimeout(() => router.push("/auth"), 100); }}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.rowIcon, { backgroundColor: "#E8F5E9" }]}>
+                  <Ionicons name="log-in-outline" size={20} color={C.primary} />
+                </View>
+                <View style={styles.rowContent}>
+                  <Text style={styles.rowLabel}>Kirish / Ro'yxatdan o'tish</Text>
+                  <Text style={styles.rowSublabel}>Eko-ball to'plash va xabar berish uchun</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={C.textSecondary} />
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
 
         {/* How to use */}
         <Text style={styles.sectionHeader}>QANDAY FOYDALANISH</Text>
@@ -180,7 +269,7 @@ export default function SettingsScreen() {
             label="Fikr-mulohaza yuborish"
             sublabel="Xatolik yoki taklif bo'lsa yozing"
             onPress={() =>
-              Linking.openURL("mailto:support@eco-xarita.uz?subject=Eco-Xarita%20Fikr").catch(() =>
+              Linking.openURL("mailto:yursinaliyevm@gmail.com?subject=Eco-Xarita%20Fikr").catch(() =>
                 Alert.alert("Xato", "Email ilovasi topilmadi")
               )
             }
@@ -213,6 +302,7 @@ export default function SettingsScreen() {
           <Text style={styles.footerText}>Eco-Xarita © 2026</Text>
         </View>
         <Text style={styles.footerSub}>O'zbekiston ekologiyasi uchun birga kurashaylik</Text>
+        <Text style={styles.footerAuthor}>Muallif: Yursinaliyev Muhammadaziz</Text>
       </ScrollView>
     </View>
   );
@@ -279,6 +369,26 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
 
+  accountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+    gap: 12,
+  },
+  accountAvatar: {
+    width: 48, height: 48, borderRadius: 24,
+    backgroundColor: "#E8F5E9",
+    alignItems: "center", justifyContent: "center",
+  },
+  accountInfo: { flex: 1, gap: 2 },
+  accountName: { fontFamily: "Nunito_700Bold", fontSize: 15, color: C.text },
+  accountEmail: { fontFamily: "Nunito_400Regular", fontSize: 12, color: C.textSecondary },
+  accountScore: { fontFamily: "Nunito_600SemiBold", fontSize: 12, color: C.primary },
+  profileBtn: {
+    backgroundColor: "#E8F5E9", paddingHorizontal: 12, paddingVertical: 7, borderRadius: 10,
+  },
+  profileBtnText: { fontFamily: "Nunito_600SemiBold", fontSize: 13, color: C.primary },
+
   guideRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -317,6 +427,10 @@ const styles = StyleSheet.create({
   },
   footerText: { fontFamily: "Nunito_700Bold", fontSize: 13, color: C.text },
   footerSub: {
+    fontFamily: "Nunito_400Regular", fontSize: 12, color: C.textSecondary,
+    textAlign: "center", marginTop: 4,
+  },
+  footerAuthor: {
     fontFamily: "Nunito_400Regular", fontSize: 12, color: C.textSecondary,
     textAlign: "center", marginTop: 4, marginBottom: 8,
   },

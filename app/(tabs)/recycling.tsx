@@ -11,9 +11,10 @@ import {
   ActivityIndicator,
   Linking,
   Alert,
+  RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { supabase } from "@/lib/supabase";
@@ -148,11 +149,13 @@ const FILTERS: { id: FilterType; label: string }[] = [
 
 export default function RecyclingScreen() {
   const insets = useSafeAreaInsets();
+  const qc = useQueryClient();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
   const [locLoading, setLocLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const { data: points = [], isLoading } = useQuery<RecyclingPoint[]>({
     queryKey: ["/api/recycling"],
@@ -183,6 +186,16 @@ export default function RecyclingScreen() {
       return data ?? [];
     },
   });
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["/api/recycling"] }),
+      qc.invalidateQueries({ queryKey: ["/api/waste_bins"] }),
+      qc.invalidateQueries({ queryKey: ["/api/machines"] }),
+    ]);
+    setRefreshing(false);
+  };
 
   const getUserLocation = async () => {
     setLocLoading(true);
@@ -346,6 +359,9 @@ export default function RecyclingScreen() {
           styles.list,
           { paddingBottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 84 + 16 },
         ]}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.primary]} tintColor={C.primary} />
+        }
         ListEmptyComponent={
           <View style={styles.empty}>
             <MaterialCommunityIcons name="recycle" size={48} color={C.border} />
@@ -353,7 +369,7 @@ export default function RecyclingScreen() {
             <Text style={styles.emptySub}>Qidiruv yoki filterni o'zgartiring</Text>
           </View>
         }
-        scrollEnabled={!!allItems.length}
+        scrollEnabled={!!allItems.length || true}
       />
     </View>
   );

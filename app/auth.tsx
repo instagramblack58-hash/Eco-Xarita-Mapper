@@ -22,6 +22,10 @@ const C = Colors.light;
 
 type Mode = "login" | "signup" | "forgot";
 
+function validateEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
 export default function AuthScreen() {
   const insets = useSafeAreaInsets();
   const { signIn, signUp, resetPassword } = useAuth();
@@ -32,16 +36,37 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [focused, setFocused] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [nameError, setNameError] = useState("");
 
   const passwordRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
 
+  const clearErrors = () => {
+    setEmailError("");
+    setPasswordError("");
+    setNameError("");
+  };
+
+  const handleModeChange = (m: Mode) => {
+    setMode(m);
+    clearErrors();
+  };
+
   const handleSubmit = async () => {
+    clearErrors();
     const emailTrimmed = email.trim();
+    let hasError = false;
 
     if (mode === "forgot") {
       if (!emailTrimmed) {
-        Alert.alert("Xato", "Email manzilini kiriting");
+        setEmailError("Email manzilini kiriting");
+        return;
+      }
+      if (!validateEmail(emailTrimmed)) {
+        setEmailError("To'g'ri email manzil kiriting");
         return;
       }
       setLoading(true);
@@ -59,18 +84,28 @@ export default function AuthScreen() {
       return;
     }
 
-    if (!emailTrimmed || !password.trim()) {
-      Alert.alert("Xato", "Email va parolni kiriting");
-      return;
+    if (!emailTrimmed) {
+      setEmailError("Email manzilini kiriting");
+      hasError = true;
+    } else if (!validateEmail(emailTrimmed)) {
+      setEmailError("To'g'ri email manzil kiriting");
+      hasError = true;
     }
-    if (password.length < 6) {
-      Alert.alert("Xato", "Parol kamida 6 ta belgidan iborat bo'lishi kerak");
-      return;
+
+    if (!password.trim()) {
+      setPasswordError("Parolni kiriting");
+      hasError = true;
+    } else if (password.length < 6) {
+      setPasswordError("Parol kamida 6 ta belgidan iborat bo'lishi kerak");
+      hasError = true;
     }
+
     if (mode === "signup" && !fullName.trim()) {
-      Alert.alert("Xato", "Ismingizni kiriting");
-      return;
+      setNameError("Ismingizni kiriting");
+      hasError = true;
     }
+
+    if (hasError) return;
 
     setLoading(true);
 
@@ -102,6 +137,12 @@ export default function AuthScreen() {
     }
   };
 
+  const inputStyle = (field: string, hasError: boolean) => [
+    styles.inputBox,
+    focused === field && styles.inputBoxFocused,
+    hasError && styles.inputBoxError,
+  ];
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -117,12 +158,10 @@ export default function AuthScreen() {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Close button */}
         <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
           <Ionicons name="close" size={22} color={C.text} />
         </TouchableOpacity>
 
-        {/* Logo */}
         <View style={styles.logoRow}>
           <MaterialCommunityIcons name="leaf" size={36} color={C.primary} />
           <Text style={styles.logoText}>Eco-Xarita</Text>
@@ -137,14 +176,21 @@ export default function AuthScreen() {
             <View style={styles.form}>
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Email</Text>
-                <View style={styles.inputBox}>
-                  <Ionicons name="mail-outline" size={18} color={C.textSecondary} style={styles.inputIcon} />
+                <View style={inputStyle("email", !!emailError)}>
+                  <Ionicons
+                    name="mail-outline"
+                    size={18}
+                    color={focused === "email" ? C.primary : C.textSecondary}
+                    style={styles.inputIcon}
+                  />
                   <TextInput
                     style={styles.input}
                     placeholder="example@mail.com"
                     placeholderTextColor={C.border}
                     value={email}
-                    onChangeText={setEmail}
+                    onChangeText={(t) => { setEmail(t); setEmailError(""); }}
+                    onFocus={() => setFocused("email")}
+                    onBlur={() => setFocused(null)}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -152,6 +198,7 @@ export default function AuthScreen() {
                     onSubmitEditing={handleSubmit}
                   />
                 </View>
+                {!!emailError && <Text style={styles.fieldError}>{emailError}</Text>}
               </View>
               <TouchableOpacity
                 style={styles.submitBtn}
@@ -159,13 +206,9 @@ export default function AuthScreen() {
                 disabled={loading}
                 activeOpacity={0.85}
               >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.submitText}>Havola yuborish</Text>
-                )}
+                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>Havola yuborish</Text>}
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setMode("login")} style={styles.forgotLink}>
+              <TouchableOpacity onPress={() => handleModeChange("login")} style={styles.forgotLink}>
                 <Ionicons name="arrow-back" size={16} color={C.primary} />
                 <Text style={styles.forgotText}>Kirishga qaytish</Text>
               </TouchableOpacity>
@@ -182,59 +225,68 @@ export default function AuthScreen() {
                 : "Yangi hisob yarating va eko-faoliyatni boshlang"}
             </Text>
 
-            {/* Toggle */}
             <View style={styles.toggle}>
               <TouchableOpacity
                 style={[styles.toggleBtn, mode === "login" && styles.toggleActive]}
-                onPress={() => setMode("login")}
+                onPress={() => handleModeChange("login")}
               >
-                <Text style={[styles.toggleText, mode === "login" && styles.toggleActiveText]}>
-                  Kirish
-                </Text>
+                <Text style={[styles.toggleText, mode === "login" && styles.toggleActiveText]}>Kirish</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.toggleBtn, mode === "signup" && styles.toggleActive]}
-                onPress={() => setMode("signup")}
+                onPress={() => handleModeChange("signup")}
               >
-                <Text style={[styles.toggleText, mode === "signup" && styles.toggleActiveText]}>
-                  Ro'yxatdan o'tish
-                </Text>
+                <Text style={[styles.toggleText, mode === "signup" && styles.toggleActiveText]}>Ro'yxatdan o'tish</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Form */}
             <View style={styles.form}>
               {mode === "signup" && (
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Ismingiz</Text>
-                  <View style={styles.inputBox}>
-                    <Ionicons name="person-outline" size={18} color={C.textSecondary} style={styles.inputIcon} />
+                  <View style={inputStyle("name", !!nameError)}>
+                    <Ionicons
+                      name="person-outline"
+                      size={18}
+                      color={focused === "name" ? C.primary : C.textSecondary}
+                      style={styles.inputIcon}
+                    />
                     <TextInput
                       style={styles.input}
                       placeholder="Ism Familiya"
                       placeholderTextColor={C.border}
                       value={fullName}
-                      onChangeText={setFullName}
+                      onChangeText={(t) => { setFullName(t); setNameError(""); }}
+                      onFocus={() => setFocused("name")}
+                      onBlur={() => setFocused(null)}
                       autoCapitalize="words"
                       autoCorrect={false}
                       returnKeyType="next"
                       onSubmitEditing={() => emailRef.current?.focus()}
                     />
                   </View>
+                  {!!nameError && <Text style={styles.fieldError}>{nameError}</Text>}
                 </View>
               )}
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Email</Text>
-                <View style={styles.inputBox}>
-                  <Ionicons name="mail-outline" size={18} color={C.textSecondary} style={styles.inputIcon} />
+                <View style={inputStyle("email", !!emailError)}>
+                  <Ionicons
+                    name="mail-outline"
+                    size={18}
+                    color={focused === "email" ? C.primary : C.textSecondary}
+                    style={styles.inputIcon}
+                  />
                   <TextInput
                     ref={emailRef}
                     style={styles.input}
                     placeholder="example@mail.com"
                     placeholderTextColor={C.border}
                     value={email}
-                    onChangeText={setEmail}
+                    onChangeText={(t) => { setEmail(t); setEmailError(""); }}
+                    onFocus={() => setFocused("email")}
+                    onBlur={() => setFocused(null)}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -242,19 +294,27 @@ export default function AuthScreen() {
                     onSubmitEditing={() => passwordRef.current?.focus()}
                   />
                 </View>
+                {!!emailError && <Text style={styles.fieldError}>{emailError}</Text>}
               </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Parol</Text>
-                <View style={styles.inputBox}>
-                  <Ionicons name="lock-closed-outline" size={18} color={C.textSecondary} style={styles.inputIcon} />
+                <View style={inputStyle("password", !!passwordError)}>
+                  <Ionicons
+                    name="lock-closed-outline"
+                    size={18}
+                    color={focused === "password" ? C.primary : C.textSecondary}
+                    style={styles.inputIcon}
+                  />
                   <TextInput
                     ref={passwordRef}
                     style={styles.input}
                     placeholder="••••••••"
                     placeholderTextColor={C.border}
                     value={password}
-                    onChangeText={setPassword}
+                    onChangeText={(t) => { setPassword(t); setPasswordError(""); }}
+                    onFocus={() => setFocused("password")}
+                    onBlur={() => setFocused(null)}
                     secureTextEntry={!showPass}
                     autoCapitalize="none"
                     returnKeyType="done"
@@ -268,6 +328,15 @@ export default function AuthScreen() {
                     />
                   </TouchableOpacity>
                 </View>
+                {!!passwordError && <Text style={styles.fieldError}>{passwordError}</Text>}
+                {mode === "signup" && !passwordError && password.length > 0 && (
+                  <View style={styles.strengthRow}>
+                    <View style={[styles.strengthBar, { backgroundColor: password.length >= 8 ? C.primary : password.length >= 6 ? "#F59E0B" : "#EF4444" }]} />
+                    <Text style={styles.strengthText}>
+                      {password.length >= 8 ? "Kuchli" : password.length >= 6 ? "O'rta" : "Zaif"}
+                    </Text>
+                  </View>
+                )}
               </View>
 
               <TouchableOpacity
@@ -286,7 +355,7 @@ export default function AuthScreen() {
               </TouchableOpacity>
 
               {mode === "login" && (
-                <TouchableOpacity onPress={() => setMode("forgot")} style={styles.forgotLink}>
+                <TouchableOpacity onPress={() => handleModeChange("forgot")} style={styles.forgotLink}>
                   <Text style={styles.forgotText}>Parolni unutdingizmi?</Text>
                 </TouchableOpacity>
               )}
@@ -308,9 +377,7 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
     marginBottom: 24,
   },
-  logoRow: {
-    flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 24,
-  },
+  logoRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 24 },
   logoText: { fontFamily: "Nunito_800ExtraBold", fontSize: 26, color: C.text },
   title: { fontFamily: "Nunito_800ExtraBold", fontSize: 28, color: C.text, marginBottom: 6 },
   subtitle: { fontFamily: "Nunito_400Regular", fontSize: 15, color: C.textSecondary, marginBottom: 28, lineHeight: 22 },
@@ -319,14 +386,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F4F6",
     borderRadius: 12, padding: 3, marginBottom: 28,
   },
-  toggleBtn: {
-    flex: 1, paddingVertical: 10, alignItems: "center", borderRadius: 10,
-  },
+  toggleBtn: { flex: 1, paddingVertical: 10, alignItems: "center", borderRadius: 10 },
   toggleActive: { backgroundColor: "#fff", ...sh.sm },
   toggleText: { fontFamily: "Nunito_600SemiBold", fontSize: 14, color: C.textSecondary },
   toggleActiveText: { color: C.text },
-  form: { gap: 20 },
-  inputGroup: { gap: 6 },
+  form: { gap: 18 },
+  inputGroup: { gap: 5 },
   inputLabel: { fontFamily: "Nunito_600SemiBold", fontSize: 13, color: C.text },
   inputBox: {
     flexDirection: "row", alignItems: "center",
@@ -334,9 +399,15 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: C.border,
     paddingHorizontal: 12, height: 52,
   },
+  inputBoxFocused: { borderColor: C.primary, backgroundColor: "#F0FDF4" },
+  inputBoxError: { borderColor: C.danger },
   inputIcon: { marginRight: 8 },
   input: { flex: 1, fontFamily: "Nunito_400Regular", fontSize: 15, color: C.text },
   eyeBtn: { padding: 4 },
+  fieldError: { fontFamily: "Nunito_400Regular", fontSize: 12, color: C.danger, marginTop: 2 },
+  strengthRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
+  strengthBar: { flex: 1, height: 3, borderRadius: 2 },
+  strengthText: { fontFamily: "Nunito_600SemiBold", fontSize: 11, color: C.textSecondary, width: 40 },
   submitBtn: {
     backgroundColor: C.primary, height: 52, borderRadius: 14,
     alignItems: "center", justifyContent: "center", marginTop: 8,

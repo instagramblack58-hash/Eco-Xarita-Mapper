@@ -28,11 +28,11 @@ import { fetch } from "expo/fetch";
 const C = Colors.light;
 
 const ISSUE_TYPES: { value: IssueType; label: string; icon: string; color: string; bg: string }[] = [
-  { value: "illegal_dumping", label: "Noqonuniy axlat tashlash", icon: "trash-outline", color: "#DC2626", bg: "#FEE2E2" },
-  { value: "tree_cutting", label: "Daraxt kesish", icon: "leaf-outline", color: "#16A34A", bg: "#DCFCE7" },
-  { value: "water_pollution", label: "Suv ifloslanishi", icon: "water-outline", color: "#2563EB", bg: "#DBEAFE" },
-  { value: "air_pollution", label: "Havo ifloslanishi", icon: "cloud-outline", color: "#7C3AED", bg: "#EDE9FE" },
-  { value: "other", label: "Boshqa muammo", icon: "alert-circle-outline", color: "#D97706", bg: "#FEF3C7" },
+  { value: "illegal_dumping", label: "Noqonuniy axlat tashlash", icon: "trash-outline",        color: "#DC2626", bg: "#FEE2E2" },
+  { value: "tree_cutting",    label: "Daraxt kesish",             icon: "leaf-outline",          color: "#16A34A", bg: "#DCFCE7" },
+  { value: "water_pollution", label: "Suv ifloslanishi",          icon: "water-outline",         color: "#2563EB", bg: "#DBEAFE" },
+  { value: "air_pollution",   label: "Havo ifloslanishi",         icon: "cloud-outline",         color: "#7C3AED", bg: "#EDE9FE" },
+  { value: "other",           label: "Boshqa muammo",             icon: "alert-circle-outline",  color: "#D97706", bg: "#FEF3C7" },
 ];
 
 export default function ReportModal() {
@@ -50,17 +50,14 @@ export default function ReportModal() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    getLocation();
-  }, []);
+    if (user) getLocation();
+  }, [user]);
 
   const getLocation = async () => {
     setLocLoading(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        setLocLoading(false);
-        return;
-      }
+      if (status !== "granted") { setLocLoading(false); return; }
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
       setLat(loc.coords.latitude);
       setLng(loc.coords.longitude);
@@ -72,35 +69,18 @@ export default function ReportModal() {
 
   const pickPhoto = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Ruxsat yo'q", "Galereya uchun ruxsat berilmadi");
-      return;
-    }
+    if (status !== "granted") { Alert.alert("Ruxsat yo'q", "Galereya uchun ruxsat berilmadi"); return; }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: "images",
-      quality: 0.7,
-      allowsEditing: true,
-      aspect: [4, 3],
+      mediaTypes: "images", quality: 0.7, allowsEditing: true, aspect: [4, 3],
     });
-    if (!result.canceled && result.assets[0]) {
-      setPhoto(result.assets[0].uri);
-    }
+    if (!result.canceled && result.assets[0]) setPhoto(result.assets[0].uri);
   };
 
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Ruxsat yo'q", "Kamera uchun ruxsat berilmadi");
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync({
-      quality: 0.7,
-      allowsEditing: true,
-      aspect: [4, 3],
-    });
-    if (!result.canceled && result.assets[0]) {
-      setPhoto(result.assets[0].uri);
-    }
+    if (status !== "granted") { Alert.alert("Ruxsat yo'q", "Kamera uchun ruxsat berilmadi"); return; }
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.7, allowsEditing: true, aspect: [4, 3] });
+    if (!result.canceled && result.assets[0]) setPhoto(result.assets[0].uri);
   };
 
   const uploadPhoto = async (uri: string): Promise<string | null> => {
@@ -114,49 +94,35 @@ export default function ReportModal() {
       if (error) return null;
       const { data: urlData } = supabase.storage.from("report-photos").getPublicUrl(data.path);
       return urlData.publicUrl;
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   };
 
   const handleSubmit = async () => {
-    if (!user) {
-      Alert.alert("Kirish kerak", "Xabar berish uchun tizimga kiring", [
-        { text: "Kirish", onPress: () => router.push("/auth") },
-        { text: "Bekor qilish", style: "cancel" },
-      ]);
-      return;
-    }
     if (lat === 0 && lng === 0) {
       Alert.alert("Xato", "Joylashuv aniqlanmadi. Qayta urinib ko'ring.");
       return;
     }
-
     setSaving(true);
     let photoUrl: string | null = null;
-    if (photo) {
-      photoUrl = await uploadPhoto(photo);
-    }
+    if (photo) photoUrl = await uploadPhoto(photo);
 
     const { error } = await supabase.from("reports").insert({
-      lat,
-      lng,
+      lat, lng,
       description: description.trim() || ISSUE_TYPES.find(t => t.value === issueType)?.label || "Muammo",
       photo_url: photoUrl,
-      user_id: user.id,
+      user_id: user!.id,
       confirmations_count: 0,
       issue_type: issueType,
     });
-
     setSaving(false);
 
     if (error) {
       Alert.alert("Xato", error.message);
     } else {
-      await incrementEcoScore(user.id, 10);
+      await incrementEcoScore(user!.id, 10);
       await qc.invalidateQueries({ queryKey: ["/api/reports"] });
       await qc.invalidateQueries({ queryKey: ["reports"] });
-      await qc.invalidateQueries({ queryKey: ["/api/my-reports", user.id] });
+      await qc.invalidateQueries({ queryKey: ["/api/my-reports", user!.id] });
       refreshProfile();
       Alert.alert("Muvaffaqiyatli! 🌱", "Muammo xabari yuborildi. +10 eko-ball!\nRahmat!", [
         {
@@ -177,17 +143,66 @@ export default function ReportModal() {
   };
 
   const selectedType = ISSUE_TYPES.find(t => t.value === issueType)!;
+  const topPad = Platform.OS === "web" ? 16 : insets.top + 8;
 
+  // ─── Auth gate ────────────────────────────────────────────────────────────
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <View style={[styles.handleBar, { paddingTop: topPad }]}>
+          <View style={styles.handle} />
+          <View style={styles.navRow}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+              <Ionicons name="close" size={22} color={C.text} />
+            </TouchableOpacity>
+            <Text style={styles.navTitle}>Muammo xabari</Text>
+            <View style={{ width: 36 }} />
+          </View>
+        </View>
+        <View style={styles.authGate}>
+          <View style={styles.authGateIcon}>
+            <Ionicons name="leaf" size={44} color="#fff" />
+          </View>
+          <Text style={styles.authGateTitle}>Kirish kerak</Text>
+          <Text style={styles.authGateSub}>
+            Ekologik muammoni xabarlash uchun tizimga kiring. Bu bepul va tez!
+          </Text>
+          <View style={styles.benefitsBox}>
+            {[
+              { icon: "🌱", text: "+10 eko-ball har bir xabar uchun" },
+              { icon: "🏆", text: "Reyting bo'yicha ko'tarilish" },
+              { icon: "✅", text: "Hamjamiyat tasdiqlashi" },
+            ].map((item) => (
+              <View key={item.text} style={styles.benefitRow}>
+                <Text style={styles.benefitIcon}>{item.icon}</Text>
+                <Text style={styles.benefitText}>{item.text}</Text>
+              </View>
+            ))}
+          </View>
+          <TouchableOpacity
+            style={styles.authGateBtn}
+            onPress={() => { router.back(); router.push("/auth"); }}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="log-in-outline" size={18} color="#fff" />
+            <Text style={styles.authGateBtnText}>Kirish / Ro'yxatdan o'tish</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.back()} style={styles.authGateCancel}>
+            <Text style={styles.authGateCancelText}>Bekor qilish</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // ─── 3-step wizard ────────────────────────────────────────────────────────
   return (
     <View style={styles.container}>
-      <View style={[styles.handleBar, { paddingTop: Platform.OS === "web" ? 16 : insets.top + 8 }]}>
+      <View style={[styles.handleBar, { paddingTop: topPad }]}>
         <View style={styles.handle} />
         <View style={styles.navRow}>
           <TouchableOpacity
-            onPress={() => {
-              if (step > 1) setStep(step - 1);
-              else router.back();
-            }}
+            onPress={() => { if (step > 1) setStep(step - 1); else router.back(); }}
             style={styles.backBtn}
           >
             <Ionicons name={step > 1 ? "arrow-back" : "close"} size={22} color={C.text} />
@@ -234,11 +249,7 @@ export default function ReportModal() {
                 </TouchableOpacity>
               ))}
             </View>
-            <TouchableOpacity
-              style={styles.nextBtn}
-              onPress={() => setStep(2)}
-              activeOpacity={0.85}
-            >
+            <TouchableOpacity style={styles.nextBtn} onPress={() => setStep(2)} activeOpacity={0.85}>
               <Text style={styles.nextBtnText}>Keyingisi</Text>
               <Ionicons name="arrow-forward" size={18} color="#fff" />
             </TouchableOpacity>
@@ -292,11 +303,7 @@ export default function ReportModal() {
               />
             </View>
 
-            <TouchableOpacity
-              style={styles.nextBtn}
-              onPress={() => setStep(3)}
-              activeOpacity={0.85}
-            >
+            <TouchableOpacity style={styles.nextBtn} onPress={() => setStep(3)} activeOpacity={0.85}>
               <Text style={styles.nextBtnText}>Keyingisi</Text>
               <Ionicons name="arrow-forward" size={18} color="#fff" />
             </TouchableOpacity>
@@ -316,7 +323,14 @@ export default function ReportModal() {
             {photo && (
               <View style={styles.photoPreviewSmall}>
                 <Image source={{ uri: photo }} style={styles.photoSmall} />
-                <Text style={styles.photoLabel}>Rasm tanlandi</Text>
+                <Text style={styles.photoLabel}>Rasm tanlandi ✓</Text>
+              </View>
+            )}
+
+            {description.trim().length > 0 && (
+              <View style={styles.descPreview}>
+                <Ionicons name="document-text-outline" size={16} color={C.primary} />
+                <Text style={styles.descPreviewText} numberOfLines={2}>{description}</Text>
               </View>
             )}
 
@@ -325,11 +339,14 @@ export default function ReportModal() {
               <View style={styles.locationBox}>
                 <Ionicons name="location" size={20} color={C.primary} />
                 {locLoading ? (
-                  <ActivityIndicator size="small" color={C.primary} style={{ marginLeft: 8 }} />
+                  <View style={{ flex: 1, alignItems: "center" }}>
+                    <ActivityIndicator size="small" color={C.primary} />
+                    <Text style={styles.locationSub}>Joylashuv aniqlanmoqda...</Text>
+                  </View>
                 ) : lat && lng ? (
                   <View style={{ flex: 1 }}>
                     <Text style={styles.locationText}>{lat.toFixed(5)}, {lng.toFixed(5)}</Text>
-                    <Text style={styles.locationSub}>GPS orqali aniqlandi</Text>
+                    <Text style={styles.locationSub}>✓ GPS orqali aniqlandi</Text>
                   </View>
                 ) : (
                   <Text style={styles.locationEmpty}>Joylashuv aniqlanmadi</Text>
@@ -351,7 +368,7 @@ export default function ReportModal() {
               ) : (
                 <>
                   <Ionicons name="send" size={18} color="#fff" />
-                  <Text style={styles.submitText}>Yuborish</Text>
+                  <Text style={styles.submitText}>Yuborish (+10 ball)</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -372,224 +389,100 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: C.border,
-    alignSelf: "center",
-    marginBottom: 12,
+    width: 36, height: 4, borderRadius: 2,
+    backgroundColor: C.border, alignSelf: "center", marginBottom: 12,
   },
-  navRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#F3F4F6",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  navTitle: {
-    fontFamily: "Nunito_700Bold",
-    fontSize: 17,
-    color: C.text,
-  },
-  stepIndicator: {
-    backgroundColor: "#E8F5E9",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  stepText: {
-    fontFamily: "Nunito_700Bold",
-    fontSize: 12,
-    color: C.primary,
-  },
-  progressBar: {
-    height: 3,
-    backgroundColor: C.border,
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: C.primary,
-    borderRadius: 2,
-  },
+  navRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
+  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#F3F4F6", alignItems: "center", justifyContent: "center" },
+  navTitle: { fontFamily: "Nunito_700Bold", fontSize: 17, color: C.text },
+  stepIndicator: { backgroundColor: "#E8F5E9", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  stepText: { fontFamily: "Nunito_700Bold", fontSize: 12, color: C.primary },
+  progressBar: { height: 3, backgroundColor: C.border, borderRadius: 2, overflow: "hidden" },
+  progressFill: { height: "100%", backgroundColor: C.primary, borderRadius: 2 },
   scroll: { flexGrow: 1 },
   stepContent: { padding: 20, gap: 16 },
-  stepTitle: {
-    fontFamily: "Nunito_800ExtraBold",
-    fontSize: 22,
-    color: C.text,
-  },
-  stepSub: {
-    fontFamily: "Nunito_400Regular",
-    fontSize: 14,
-    color: C.textSecondary,
-    lineHeight: 20,
-  },
+  stepTitle: { fontFamily: "Nunito_800ExtraBold", fontSize: 22, color: C.text },
+  stepSub: { fontFamily: "Nunito_400Regular", fontSize: 14, color: C.textSecondary, lineHeight: 20 },
   issueList: { gap: 10 },
   issueItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F9FAFB",
-    borderRadius: 12,
-    padding: 14,
-    gap: 12,
-    borderWidth: 1.5,
-    borderColor: "transparent",
+    flexDirection: "row", alignItems: "center",
+    backgroundColor: "#F9FAFB", borderRadius: 12,
+    padding: 14, gap: 12,
+    borderWidth: 1.5, borderColor: "transparent",
   },
-  issueIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  issueLabel: {
-    fontFamily: "Nunito_600SemiBold",
-    fontSize: 15,
-    color: C.text,
-    flex: 1,
-  },
+  issueIcon: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  issueLabel: { fontFamily: "Nunito_600SemiBold", fontSize: 15, color: C.text, flex: 1 },
   issueChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    flexDirection: "row", alignItems: "center", gap: 6,
+    alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
   },
-  issueChipText: {
-    fontFamily: "Nunito_600SemiBold",
-    fontSize: 13,
-  },
+  issueChipText: { fontFamily: "Nunito_600SemiBold", fontSize: 13 },
   section: { gap: 8 },
-  sectionLabel: {
-    fontFamily: "Nunito_600SemiBold",
-    fontSize: 12,
-    color: C.textSecondary,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
+  sectionLabel: { fontFamily: "Nunito_600SemiBold", fontSize: 12, color: C.textSecondary, textTransform: "uppercase", letterSpacing: 0.5 },
   photoRow: { flexDirection: "row", gap: 12 },
   photoBtn: {
-    flex: 1,
-    height: 90,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: C.border,
-    borderStyle: "dashed",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    backgroundColor: "#F9FAFB",
+    flex: 1, height: 90, borderRadius: 12,
+    borderWidth: 1.5, borderColor: C.border, borderStyle: "dashed",
+    alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: "#F9FAFB",
   },
-  photoBtnText: {
-    fontFamily: "Nunito_600SemiBold",
-    fontSize: 13,
-    color: C.primary,
-  },
-  photoPreview: {
-    borderRadius: 12,
-    overflow: "hidden",
-    position: "relative",
-  },
+  photoBtnText: { fontFamily: "Nunito_600SemiBold", fontSize: 13, color: C.primary },
+  photoPreview: { borderRadius: 12, overflow: "hidden", position: "relative" },
   photo: { width: "100%", height: 200, borderRadius: 12 },
-  removePhoto: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-  },
-  photoPreviewSmall: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    backgroundColor: "#F9FAFB",
-    borderRadius: 12,
-    padding: 10,
-  },
+  removePhoto: { position: "absolute", top: 8, right: 8 },
+  photoPreviewSmall: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#F9FAFB", borderRadius: 12, padding: 10 },
   photoSmall: { width: 56, height: 56, borderRadius: 8 },
-  photoLabel: {
-    fontFamily: "Nunito_600SemiBold",
-    fontSize: 13,
-    color: C.text,
+  photoLabel: { fontFamily: "Nunito_600SemiBold", fontSize: 13, color: C.text },
+  descPreview: {
+    flexDirection: "row", alignItems: "flex-start", gap: 8,
+    backgroundColor: "#F0FDF4", borderRadius: 12, padding: 10,
   },
+  descPreviewText: { fontFamily: "Nunito_400Regular", fontSize: 13, color: C.text, flex: 1 },
   textArea: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: C.border,
-    padding: 14,
-    fontFamily: "Nunito_400Regular",
-    fontSize: 15,
-    color: C.text,
-    minHeight: 100,
+    backgroundColor: "#F9FAFB", borderRadius: 12,
+    borderWidth: 1.5, borderColor: C.border,
+    padding: 14, fontFamily: "Nunito_400Regular", fontSize: 15, color: C.text, minHeight: 100,
   },
   locationBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F9FAFB",
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: C.border,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 8,
+    flexDirection: "row", alignItems: "center",
+    backgroundColor: "#F9FAFB", borderRadius: 12,
+    borderWidth: 1.5, borderColor: C.border,
+    paddingHorizontal: 14, paddingVertical: 12, gap: 8,
   },
-  locationText: {
-    fontFamily: "Nunito_600SemiBold",
-    fontSize: 14,
-    color: C.text,
-  },
-  locationSub: {
-    fontFamily: "Nunito_400Regular",
-    fontSize: 11,
-    color: C.textSecondary,
-  },
-  locationEmpty: {
-    fontFamily: "Nunito_400Regular",
-    fontSize: 14,
-    color: C.textSecondary,
-    flex: 1,
-  },
+  locationText: { fontFamily: "Nunito_600SemiBold", fontSize: 14, color: C.text },
+  locationSub: { fontFamily: "Nunito_400Regular", fontSize: 11, color: C.textSecondary, marginTop: 2 },
+  locationEmpty: { fontFamily: "Nunito_400Regular", fontSize: 14, color: C.textSecondary, flex: 1 },
   refreshBtn: { padding: 4 },
   nextBtn: {
-    backgroundColor: C.primary,
-    height: 52,
-    borderRadius: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    marginTop: 8,
+    backgroundColor: C.primary, height: 52, borderRadius: 14,
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 8,
     ...sh.green,
   },
-  nextBtnText: {
-    fontFamily: "Nunito_700Bold",
-    fontSize: 16,
-    color: "#fff",
-  },
+  nextBtnText: { fontFamily: "Nunito_700Bold", fontSize: 16, color: "#fff" },
   submitBtn: {
-    backgroundColor: C.primary,
-    height: 52,
-    borderRadius: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    marginTop: 8,
+    backgroundColor: C.primary, height: 52, borderRadius: 14,
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 8,
     ...sh.green,
   },
-  submitText: {
-    fontFamily: "Nunito_700Bold",
-    fontSize: 16,
-    color: "#fff",
+  submitText: { fontFamily: "Nunito_700Bold", fontSize: 16, color: "#fff" },
+
+  authGate: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 28, gap: 16 },
+  authGateIcon: {
+    width: 90, height: 90, borderRadius: 45,
+    backgroundColor: C.primary, alignItems: "center", justifyContent: "center",
+    marginBottom: 4, ...sh.greenXl,
   },
+  authGateTitle: { fontFamily: "Nunito_800ExtraBold", fontSize: 26, color: C.text },
+  authGateSub: { fontFamily: "Nunito_400Regular", fontSize: 14, color: C.textSecondary, textAlign: "center", lineHeight: 22 },
+  benefitsBox: { backgroundColor: "#F0FDF4", borderRadius: 16, padding: 16, width: "100%", gap: 10 },
+  benefitRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  benefitIcon: { fontSize: 20 },
+  benefitText: { fontFamily: "Nunito_600SemiBold", fontSize: 14, color: C.text },
+  authGateBtn: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: C.primary, paddingVertical: 15, paddingHorizontal: 28, borderRadius: 14,
+    width: "100%", justifyContent: "center", ...sh.green,
+  },
+  authGateBtnText: { fontFamily: "Nunito_700Bold", fontSize: 16, color: "#fff" },
+  authGateCancel: { paddingVertical: 10 },
+  authGateCancelText: { fontFamily: "Nunito_600SemiBold", fontSize: 14, color: C.textSecondary },
 });
