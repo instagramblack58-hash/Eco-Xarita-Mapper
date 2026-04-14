@@ -1,0 +1,131 @@
+Create a complete Expo React Native mobile app called "Eco-Xarita" (Eco Map) for Uzbekistan. The app helps citizens report environmental issues (illegal dumping, tree cutting, water/air pollution) and find recycling points, waste bins, and reverse vending machines (plastic bottle return machines). It includes a gamification system (eco‑score, levels, achievements) and a verification system where users can confirm the existence of points.
+
+## Tech Stack
+- Expo SDK 52 (React Native 0.76, TypeScript)
+- Expo Router (file‑based routing)
+- Supabase (PostgreSQL, Auth, Storage, Realtime)
+- Google Maps (react-native-maps) – NOT Yandex
+- TanStack React Query, React Context for auth
+- Bottom sheet: @gorhom/bottom-sheet
+- Styling: custom, Nunito font, responsive
+
+## Features (must all work)
+
+### 1. Authentication
+- Email/password signup/login via Supabase Auth.
+- Persistent session, logout, profile update (full name).
+
+### 2. Interactive Map (Google Maps)
+- Default view centered on Uzbekistan (41.0, 69.0) with zoom 6.
+- Markers for:
+  - Reports (red) – user‑submitted environmental issues.
+  - Recycling points (paper=blue, plastic=purple, mixed=green, glass=orange, hazardous=black).
+  - Waste bins (teal).
+  - Reverse vending machines (amber/gold) – with fields: name, address, operator, reward type (cheque/bonus/discount/money), reward description, working hours.
+- User location blue dot, button to center on user.
+- Layer toggle panel (show/hide each marker type).
+- Clustering (using react-native-maps built‑in clustering or a simple library).
+- Tap marker → bottom sheet popup with details (description, photo, confirmations, date for reports; name, address, distance, reward info for machines) and action buttons: "Yo'nalish" (directions) and "Tasdiqlash" (verify – only for authenticated users). Verification calls a Supabase RPC `verify_point` that increments a verification counter and logs the action.
+
+### 3. Report an Issue
+- FAB button opens modal with:
+  - Issue type dropdown (illegal dumping, tree cutting, water pollution, air pollution, other).
+  - Photo picker (camera/gallery) → upload to Supabase Storage bucket `report-photos`.
+  - Description (optional).
+  - Automatic geolocation (with fallback to manual map placement).
+- Submits to `reports` table with lat, lng, description, photo_url, user_id, issue_type, confirmations_count (default 0).
+
+### 4. View Reports List
+- Tab `reports.tsx` shows all reports with photo thumbnail, issue type, description preview, confirmations count, time ago.
+- Tap to open detail screen with full image, description, map view, confirmation button, share button.
+
+### 5. Recycling Points & Waste Bins & Reverse Vending Machines
+- Tab `recycling.tsx` shows a combined list with filters (paper, plastic, mixed, glass, hazardous, bins, avtomatlar).
+- Each item shows name, address, distance (if location granted), type badge, and a directions button.
+- Tap opens a detail modal with map view and "Yo'nalish" button.
+- Reverse vending machines also display reward information (e.g., "Har bir idish uchun 200 so‘m").
+
+### 6. User Profile (Gamified)
+- Tab `profile.tsx` shows:
+  - User avatar (emoji/icon based on level).
+  - Full name (editable), email.
+  - Eco‑score and level (levels: Eko‑boshlovchi, Eko‑faol, Tabiat himoyachisi, Yashil elchi, Eko‑qahramon).
+  - Statistics: total reports, total confirmations received, achievements unlocked.
+  - Achievements grid (first report, 5 reports, 20 reports, 10 confirmations, 50 confirmations, 100 points, 1000 points).
+  - Leaderboard (top 5 users by eco‑score).
+  - List of user's own reports.
+  - About section (developer: Yursinaliyev Muhammadaziz, email: yursinaliyevm@gmail.com).
+  - Sign out button.
+  - Option to view own verification history (count of times user verified points).
+
+### 7. Verification System
+- On any marker popup (report, recycling point, bin, machine), authenticated users see a "Tasdiqlash" button.
+- Clicking calls `verify_point(point_type, point_id, user_id)` RPC.
+- The RPC increments `verification_count` and sets `last_verified_at` on the corresponding table, and inserts a record into `verification_audit`.
+- The UI shows a success alert and refreshes data.
+
+### 8. Reverse Vending Machines (Database & UI)
+- New table `reverse_vending_machines` with columns: id, lat, lng, name, address, operator, reward_type, reward_description, status (active/maintenance/inactive), working_hours, phone, photo_url, verification_count, last_verified_at.
+- Admin (or any authenticated user for now) can add/update machines via a simple form (optional – not required for MVP but can be a simple admin screen).
+- In map and list, machines appear with a special icon and reward badge.
+
+### 9. Offline & Performance
+- React Query caching with AsyncStorage persistence.
+- Google Maps caching by the SDK.
+
+### 10. Galaxy Store & APK Build
+- Configure `eas.json` with preview profile producing APK.
+- Environment variables (Supabase URL, anon key, Google Maps key) passed via secrets or EAS env.
+- GitHub Actions workflow (provided) that builds APK on push.
+
+### 11. Startup Pitch Materials
+- Generate a file `email_to_agency.txt` containing a professional email to the "Yoshlar ishlari va ekologiya agentligi" explaining the project, asking for collaboration, data sharing, and support (including potential monetary rewards for users who report violations).
+- Generate a file `social_media_posts.txt` with 3 short posts (for Instagram/Telegram) describing the app and its future plans (including rewards for recycling).
+
+## Database Schema (Supabase SQL)
+Include a complete SQL script (`supabase-final.sql`) that:
+- Creates/extends `profiles`, `reports`, `recycling_points`, `waste_bins`.
+- Adds columns `is_verified`, `source`, `last_verified_at`, `verification_count` to `recycling_points`.
+- Creates `reverse_vending_machines` table.
+- Creates `verification_audit` table.
+- Creates RPC function `verify_point`.
+- Sets up RLS policies (anyone can read, authenticated can insert/update).
+- Inserts sample data for Tashkent (at least 2 recycling points, 2 waste bins, 1 reverse vending machine).
+
+## Environment Variables
+The app expects:
+- `EXPO_PUBLIC_SUPABASE_URL`
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+- `EXPO_PUBLIC_GOOGLE_MAPS_KEY`
+
+## File Structure
+Generate all necessary files in the correct directories:
+- `app/(tabs)/index.tsx` (MapScreen)
+- `app/(tabs)/reports.tsx`
+- `app/(tabs)/recycling.tsx`
+- `app/(tabs)/profile.tsx`
+- `app/auth.tsx`
+- `app/report-modal.tsx`
+- `app/report-detail.tsx`
+- `components/` – reusable components (bottom sheet, verification button, etc.)
+- `lib/supabase.ts`
+- `lib/query-client.ts`
+- `context/AuthContext.tsx`
+- `constants/colors.ts`
+- `app.json`
+- `eas.json`
+- `tsconfig.json`
+- `metro.config.js` (or .cjs)
+- `babel.config.js` (or .cjs)
+- `supabase-final.sql`
+- `email_to_agency.txt`
+- `social_media_posts.txt`
+- `.github/workflows/build-apk.yml` (GitHub Actions to build APK using EAS)
+
+Make sure the code is fully functional, error‑handled, and follows the existing style (TypeScript, React Native, Expo Router). The app must work on Android (production APK) and should not crash. All UI text must be in Uzbek (as shown above). Use the Nunito font.
+
+The map should use Google Maps via `react-native-maps` with `PROVIDER_GOOGLE`. No WebView or Yandex. All markers must cluster when zoomed out.
+
+The verification button should only appear for authenticated users. After verification, the marker's verification count should increase (visible in popup). The user's profile should show total verifications made.
+
+Provide complete code for every file. Do not skip any. Ensure that the SQL script can be run in Supabase SQL Editor without errors.
