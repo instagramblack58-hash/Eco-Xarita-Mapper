@@ -18,6 +18,7 @@ import * as Location from "expo-location";
 import { supabase, verifyPoint } from "@/lib/supabase";
 import type { Report, RecyclingPoint, WasteBin, ReverseVendingMachine } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
+import { useHaptics } from "@/hooks/useHaptics";
 import Colors from "@/constants/colors";
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 
@@ -76,6 +77,8 @@ export default function MapScreen() {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const qc = useQueryClient();
   const { user, refreshProfile } = useAuth();
+
+  const haptics = useHaptics();
 
   const [showLayerPanel, setShowLayerPanel] = useState(false);
   const [activeLayers, setActiveLayers] = useState<Set<string>>(
@@ -239,8 +242,10 @@ export default function MapScreen() {
     setVerifying(false);
 
     if (error) {
+      haptics.error();
       Alert.alert("Xato", error.message || "Tasdiqlashda xatolik yuz berdi");
     } else {
+      haptics.success();
       Alert.alert("✅ Muvaffaqiyat", "Tasdiqlash amalga oshirildi! +5 eko-ball oldingiz.");
       refreshMap();
       refreshProfile();

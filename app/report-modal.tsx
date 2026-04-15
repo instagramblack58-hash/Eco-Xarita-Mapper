@@ -21,6 +21,7 @@ import * as Location from "expo-location";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase, incrementEcoScore } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
+import { useHaptics } from "@/hooks/useHaptics";
 import type { IssueType } from "@/lib/supabase";
 import Colors from "@/constants/colors";
 import { fetch } from "expo/fetch";
@@ -40,6 +41,7 @@ export default function ReportModal() {
   const { user, refreshProfile } = useAuth();
   const qc = useQueryClient();
 
+  const haptics = useHaptics();
   const [step, setStep] = useState(1);
   const [issueType, setIssueType] = useState<IssueType>("illegal_dumping");
   const [description, setDescription] = useState("");
@@ -99,6 +101,7 @@ export default function ReportModal() {
 
   const handleSubmit = async () => {
     if (lat === 0 && lng === 0) {
+      haptics.error();
       Alert.alert("Xato", "Joylashuv aniqlanmadi. Qayta urinib ko'ring.");
       return;
     }
@@ -117,8 +120,10 @@ export default function ReportModal() {
     setSaving(false);
 
     if (error) {
+      haptics.error();
       Alert.alert("Xato", error.message);
     } else {
+      haptics.success();
       await incrementEcoScore(user!.id, 10);
       await qc.invalidateQueries({ queryKey: ["/api/reports"] });
       await qc.invalidateQueries({ queryKey: ["reports"] });
@@ -236,7 +241,7 @@ export default function ReportModal() {
                     styles.issueItem,
                     issueType === type.value && { borderColor: type.color, borderWidth: 2 },
                   ]}
-                  onPress={() => setIssueType(type.value)}
+                  onPress={() => { haptics.selection(); setIssueType(type.value); }}
                   activeOpacity={0.8}
                 >
                   <View style={[styles.issueIcon, { backgroundColor: type.bg }]}>
@@ -249,7 +254,7 @@ export default function ReportModal() {
                 </TouchableOpacity>
               ))}
             </View>
-            <TouchableOpacity style={styles.nextBtn} onPress={() => setStep(2)} activeOpacity={0.85}>
+            <TouchableOpacity style={styles.nextBtn} onPress={() => { haptics.medium(); setStep(2); }} activeOpacity={0.85}>
               <Text style={styles.nextBtnText}>Keyingisi</Text>
               <Ionicons name="arrow-forward" size={18} color="#fff" />
             </TouchableOpacity>
@@ -303,7 +308,7 @@ export default function ReportModal() {
               />
             </View>
 
-            <TouchableOpacity style={styles.nextBtn} onPress={() => setStep(3)} activeOpacity={0.85}>
+            <TouchableOpacity style={styles.nextBtn} onPress={() => { haptics.medium(); setStep(3); }} activeOpacity={0.85}>
               <Text style={styles.nextBtnText}>Keyingisi</Text>
               <Ionicons name="arrow-forward" size={18} color="#fff" />
             </TouchableOpacity>

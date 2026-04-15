@@ -21,6 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, confirmReport, incrementEcoScore, getComments, addComment } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
+import { useHaptics } from "@/hooks/useHaptics";
 import type { Report, IssueType, ReportComment } from "@/lib/supabase";
 import Colors from "@/constants/colors";
 
@@ -48,6 +49,7 @@ export default function ReportDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user, profile } = useAuth();
   const qc = useQueryClient();
+  const haptics = useHaptics();
   const [commentText, setCommentText] = useState("");
   const scrollRef = useRef<ScrollView>(null);
 
@@ -75,11 +77,13 @@ export default function ReportDetailScreen() {
       await incrementEcoScore(user.id, 1);
     },
     onSuccess: () => {
+      haptics.success();
       qc.invalidateQueries({ queryKey: ["/api/reports"] });
       qc.invalidateQueries({ queryKey: ["/api/reports", id] });
       Alert.alert("Muvaffaqiyatli", "Hisobot tasdiqlandi! +1 ball");
     },
     onError: (err: any) => {
+      haptics.error();
       Alert.alert("Xato", err.message ?? "Allaqachon tasdiqlangan bo'lishi mumkin");
     },
   });
@@ -92,11 +96,13 @@ export default function ReportDetailScreen() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
+      haptics.light();
       setCommentText("");
       refetchComments();
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 300);
     },
     onError: (err: any) => {
+      haptics.error();
       Alert.alert("Xato", err.message);
     },
   });

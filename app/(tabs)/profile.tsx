@@ -60,14 +60,25 @@ function getAchievements(reportCount: number, totalConfirm: number, score: numbe
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const qc = useQueryClient();
   const { user, profile, signOut, refreshProfile, updateName } = useAuth();
   const [loadingSignOut, setLoadingSignOut] = useState(false);
   const [editNameVisible, setEditNameVisible] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refreshProfile();
+    await qc.invalidateQueries({ queryKey: ["/api/my-reports", user?.id] });
+    await qc.invalidateQueries({ queryKey: ["/api/verifications", user?.id] });
+    await qc.invalidateQueries({ queryKey: ["/api/leaderboard"] });
+    setRefreshing(false);
+  };
 
   const { data: myReports = [] } = useQuery({
     queryKey: ["/api/my-reports", user?.id],
@@ -198,6 +209,9 @@ export default function ProfileScreen() {
         style={[styles.container, { paddingTop: topPad }]}
         contentContainerStyle={{ paddingBottom: bottomPad + 84 + 16 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.primary]} tintColor={C.primary} />
+        }
       >
         {/* Header */}
         <View style={styles.header}>

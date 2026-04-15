@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useAuth } from "@/context/AuthContext";
+import { useHaptics } from "@/hooks/useHaptics";
 import Colors from "@/constants/colors";
 
 const C = Colors.light;
@@ -29,6 +30,7 @@ function validateEmail(email: string) {
 export default function AuthScreen() {
   const insets = useSafeAreaInsets();
   const { signIn, signUp, resetPassword } = useAuth();
+  const haptics = useHaptics();
 
   const [mode, setMode] = useState<Mode>("login");
   const [fullName, setFullName] = useState("");
@@ -63,18 +65,22 @@ export default function AuthScreen() {
     if (mode === "forgot") {
       if (!emailTrimmed) {
         setEmailError("Email manzilini kiriting");
+        haptics.error();
         return;
       }
       if (!validateEmail(emailTrimmed)) {
         setEmailError("To'g'ri email manzil kiriting");
+        haptics.error();
         return;
       }
       setLoading(true);
       const { error } = await resetPassword(emailTrimmed);
       setLoading(false);
       if (error) {
+        haptics.error();
         Alert.alert("Xato", error);
       } else {
+        haptics.success();
         Alert.alert(
           "Yuborildi!",
           "Parolni tiklash havolasi emailingizga yuborildi. Iltimos emailingizni tekshiring.",
@@ -105,7 +111,10 @@ export default function AuthScreen() {
       hasError = true;
     }
 
-    if (hasError) return;
+    if (hasError) {
+      haptics.error();
+      return;
+    }
 
     setLoading(true);
 
@@ -113,21 +122,25 @@ export default function AuthScreen() {
       const { error } = await signIn(emailTrimmed, password);
       setLoading(false);
       if (error) {
+        haptics.error();
         let msg = error;
         if (error.includes("Invalid login credentials")) msg = "Email yoki parol noto'g'ri";
         else if (error.includes("Email not confirmed")) msg = "Email tasdiqlang. Pochta qutingizni tekshiring.";
         Alert.alert("Xato", msg);
       } else {
+        haptics.success();
         router.back();
       }
     } else {
       const { error } = await signUp(emailTrimmed, password, fullName.trim());
       setLoading(false);
       if (error) {
+        haptics.error();
         let msg = error;
         if (error.includes("already registered")) msg = "Bu email allaqachon ro'yxatdan o'tgan";
         Alert.alert("Xato", msg);
       } else {
+        haptics.success();
         Alert.alert(
           "Muvaffaqiyatli! 🎉",
           "Hisob yaratildi. Emailingizga tasdiqlash havolasi yuborildi.",
