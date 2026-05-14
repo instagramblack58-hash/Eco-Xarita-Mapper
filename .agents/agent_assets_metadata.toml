@@ -1,0 +1,26 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "9hkrJmzkyH4t--IInVIb8"
+uri = "file://assets/images/icon.png"
+type = "image"
+title = "eco leaf map icon"
+
+[[generated]]
+id = "Q_0Ux5St6bdknbc60Xknv"
+uri = "file://assets/images/splash-icon.png"
+type = "image"
+title = "eco leaf splash"
+
+[[generated]]
+id = "AuHzQjG6pgk6ZLepmewuh"
+uri = "file://assets/images/android-icon-foreground.png"
+type = "image"
+title = "android icon foreground white leaf"
+
+[[generated]]
+id = "_p4vXK0xSZCgHX3YgtXRk"
+uri = "file://assets/images/android-icon-monochrome.png"
+type = "image"
+title = "android monochrome icon leaf"

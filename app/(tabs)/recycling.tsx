@@ -164,6 +164,7 @@ export default function RecyclingScreen() {
       if (error) throw error;
       return data ?? [];
     },
+    retry: 1,
   });
 
   const { data: bins = [] } = useQuery<WasteBin[]>({
@@ -173,6 +174,7 @@ export default function RecyclingScreen() {
       if (error) return [];
       return data ?? [];
     },
+    retry: 1,
   });
 
   const { data: machines = [] } = useQuery<ReverseVendingMachine[]>({
@@ -185,6 +187,7 @@ export default function RecyclingScreen() {
       if (error) return [];
       return data ?? [];
     },
+    retry: 1,
   });
 
   const onRefresh = async () => {
@@ -267,21 +270,15 @@ export default function RecyclingScreen() {
     avtomatlar: machines.length,
   }), [points, bins, machines]);
 
-  if (isLoading) {
-    return (
-      <View style={[styles.container, styles.loadingContainer, { paddingTop: topPad }]}>
-        <ActivityIndicator size="large" color={C.primary} />
-      </View>
-    );
-  }
-
   return (
     <View style={[styles.container, { paddingTop: topPad }]}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.headerTitle}>Qayta ishlash</Text>
-            <Text style={styles.headerSub}>{allItems.length} ta punkt</Text>
+            <Text style={styles.headerSub}>
+              {isLoading ? "Yuklanmoqda..." : `${allItems.length} ta punkt`}
+            </Text>
           </View>
           <TouchableOpacity style={styles.locBtn} onPress={getUserLocation} disabled={locLoading}>
             {locLoading ? (
