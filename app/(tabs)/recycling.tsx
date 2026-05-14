@@ -369,7 +369,11 @@ export default function RecyclingScreen() {
             <Text style={styles.emptySub}>Qidiruv yoki filterni o'zgartiring</Text>
           </View>
         }
-        scrollEnabled={!!allItems.length || true}
+        keyboardShouldPersistTaps="handled"
+        initialNumToRender={8}
+        maxToRenderPerBatch={5}
+        windowSize={5}
+        removeClippedSubviews={Platform.OS === "android"}
       />
     </View>
   );

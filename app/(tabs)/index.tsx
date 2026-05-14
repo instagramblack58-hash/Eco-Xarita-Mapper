@@ -162,7 +162,7 @@ export default function MapScreen() {
 
       {/* FAB */}
       <TouchableOpacity
-        style={[styles.fab, { bottom: bottomPad - 84 + 16 }]}
+        style={[styles.fab, { bottom: 84 + 20 }]}
         onPress={() => router.push("/report-modal")}
         activeOpacity={0.85}
       >

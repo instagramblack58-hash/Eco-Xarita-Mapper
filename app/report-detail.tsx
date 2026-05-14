@@ -171,7 +171,7 @@ export default function ReportDetailScreen() {
   return (
     <KeyboardAvoidingView
       style={[styles.container, { paddingTop: topPad }]}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={0}
     >
       <View style={styles.header}>

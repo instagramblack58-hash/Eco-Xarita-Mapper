@@ -243,6 +243,11 @@ export default function ReportsScreen() {
           { paddingBottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 84 + 16 },
         ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.primary]} tintColor={C.primary} />}
+        keyboardShouldPersistTaps="handled"
+        initialNumToRender={8}
+        maxToRenderPerBatch={5}
+        windowSize={5}
+        removeClippedSubviews={Platform.OS === "android"}
         ListEmptyComponent={
           !isLoading ? (
             <View style={styles.empty}>
@@ -317,9 +322,10 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: "row", alignItems: "center", gap: 4,
     paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20,
+    flexShrink: 1,
   },
   badgeText: { fontFamily: "Nunito_600SemiBold", fontSize: 11 },
-  cardTime: { fontFamily: "Nunito_400Regular", fontSize: 11, color: C.textSecondary },
+  cardTime: { fontFamily: "Nunito_400Regular", fontSize: 11, color: C.textSecondary, flexShrink: 0 },
   cardDesc: { fontFamily: "Nunito_600SemiBold", fontSize: 13, color: C.text, lineHeight: 18 },
   cardFooter: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   confirmChip: { flexDirection: "row", alignItems: "center" },

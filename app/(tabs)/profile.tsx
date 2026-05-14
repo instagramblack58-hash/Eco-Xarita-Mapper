@@ -275,24 +275,24 @@ export default function ProfileScreen() {
         {/* Stats row */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <Ionicons name="alert-circle" size={22} color={C.accent} />
-            <Text style={styles.statNum}>{myReports.length}</Text>
-            <Text style={styles.statLabel}>Xabarlar</Text>
+            <Ionicons name="alert-circle" size={20} color={C.accent} />
+            <Text style={styles.statNum} numberOfLines={1}>{myReports.length}</Text>
+            <Text style={styles.statLabel} numberOfLines={1}>Xabarlar</Text>
           </View>
           <View style={styles.statCard}>
-            <Ionicons name="shield-checkmark" size={22} color="#7C3AED" />
-            <Text style={styles.statNum}>{verificationCount}</Text>
-            <Text style={styles.statLabel}>Tasdiqladi</Text>
+            <Ionicons name="shield-checkmark" size={20} color="#7C3AED" />
+            <Text style={styles.statNum} numberOfLines={1}>{verificationCount}</Text>
+            <Text style={styles.statLabel} numberOfLines={1}>Tasdiqladi</Text>
           </View>
           <View style={styles.statCard}>
-            <Ionicons name="checkmark-circle" size={22} color={C.primary} />
-            <Text style={styles.statNum}>{totalConfirmations}</Text>
-            <Text style={styles.statLabel}>Olingan</Text>
+            <Ionicons name="checkmark-circle" size={20} color={C.primary} />
+            <Text style={styles.statNum} numberOfLines={1}>{totalConfirmations}</Text>
+            <Text style={styles.statLabel} numberOfLines={1}>Olingan</Text>
           </View>
           <View style={styles.statCard}>
-            <Ionicons name="trophy" size={22} color="#F59E0B" />
-            <Text style={styles.statNum}>{unlockedCount}</Text>
-            <Text style={styles.statLabel}>Yutuqlar</Text>
+            <Ionicons name="trophy" size={20} color="#F59E0B" />
+            <Text style={styles.statNum} numberOfLines={1}>{unlockedCount}</Text>
+            <Text style={styles.statLabel} numberOfLines={1}>Yutuqlar</Text>
           </View>
         </View>
 
@@ -545,13 +545,13 @@ const styles = StyleSheet.create({
   progressBar: { height: 8, backgroundColor: "#E5E7EB", borderRadius: 4, overflow: "hidden" },
   progressFill: { height: "100%", borderRadius: 4 },
 
-  statsRow: { flexDirection: "row", paddingHorizontal: 14, gap: 10, marginBottom: 14 },
+  statsRow: { flexDirection: "row", paddingHorizontal: 14, gap: 6, marginBottom: 14 },
   statCard: {
     flex: 1, backgroundColor: C.surface, borderRadius: 14,
-    alignItems: "center", paddingVertical: 14, gap: 4, ...sh.sm,
+    alignItems: "center", paddingVertical: 12, gap: 3, ...sh.sm, minWidth: 0,
   },
-  statNum: { fontFamily: "Nunito_800ExtraBold", fontSize: 22, color: C.text },
-  statLabel: { fontFamily: "Nunito_400Regular", fontSize: 11, color: C.textSecondary },
+  statNum: { fontFamily: "Nunito_800ExtraBold", fontSize: 20, color: C.text },
+  statLabel: { fontFamily: "Nunito_400Regular", fontSize: 10, color: C.textSecondary, textAlign: "center" },
 
   section: {
     marginHorizontal: 14, marginBottom: 14,
@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
   },
   achieveCardLocked: { backgroundColor: "#F9FAFB", opacity: 0.5 },
   achieveIcon: { fontSize: 24 },
-  achieveTitle: { fontFamily: "Nunito_600SemiBold", fontSize: 10, color: C.text, textAlign: "center" },
+  achieveTitle: { fontFamily: "Nunito_600SemiBold", fontSize: 10, color: C.text, textAlign: "center", flexShrink: 1 },
   achieveTitleLocked: { color: C.textSecondary },
 
   leaderRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 10 },
