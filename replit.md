@@ -7,96 +7,47 @@ A production-grade Triple-AAA Expo React Native mobile app for reporting environ
 - **Frontend**: Expo ~54 (React Native) with Expo Router (file-based routing)
 - **Backend**: Express.js (TypeScript) on port 5000
 - **Database & Auth**: Supabase (PostgreSQL + Auth + Storage + Realtime)
-- **Maps**: Google Maps via `react-native-maps` (native), web fallback (report list)
-- **Fonts**: Nunito (Google Fonts — Regular, SemiBold, Bold, ExtraBold)
+- **Maps**: Google Maps via `react-native-maps` 1.18.0 (native), web fallback (report list)
+- **Fonts**: Nunito loaded from local `assets/fonts/*.ttf` (no CDN dependency)
 - **State**: React Query v5 + React Context (AuthContext)
 - **Haptics**: `expo-haptics` via `hooks/useHaptics.ts`
 
-## Features
+## Screens (6 tabs + 3 stacks)
 
-### Map Screen — `index.native.tsx` / `index.tsx`
-- Full Google Maps integration (native) — web shows report list fallback
-- 8 marker layers: reports, paper, plastic, mixed, glass, hazardous, waste bins, reverse vending machines
-- Layer toggle panel with individual layer on/off
-- `@gorhom/bottom-sheet` popup for each marker with full details, directions, verify button
-- Verification system: `verify_point` RPC (+5 eko-ball per verification, logged in `verification_audit`)
-- User location button
-- Haptic feedback on verify success/error
+### 1. Xarita — `index.native.tsx` / `index.tsx`
+- Full Google Maps (native) with 8 marker layers: reports, paper, plastic, mixed, glass, hazardous, waste bins, reverse vending machines
+- Layer toggle panel, `@gorhom/bottom-sheet` per marker, verify button (+5 eko-ball), user location
+- Web fallback: report list with stat chips
 
-### Reports Screen — `reports.tsx`
-- Full text search by description / issue type
-- Issue type filter chips (5 types + "Barchasi")
-- Sort: Newest, Oldest, Most Popular
-- Pull-to-refresh
-- Empty state with CTA to create first report
+### 2. Muammolar — `reports.tsx`
+- Search, 5-type filter chips, sort (Yangi/Eski/Mashhur), pull-to-refresh
+- Empty state with CTA, touch targets ≥44pt
 
-### Report Modal — `report-modal.tsx`
-- **Auth gate at start** — shows login CTA if not authenticated (with benefits list), no dead end
-- 3-step wizard with progress bar
-- Step 1: Issue type selection (5 types with icons + haptic selection)
-- Step 2: Optional photo (camera or gallery) + description
-- Step 3: GPS location confirmation (auto-detected)
-- Photo upload to Supabase Storage `report-photos` bucket
-- +10 eko-ball on submit
-- Share after submission via native Share API
-- Haptic feedback on step progression, selection, success/error
+### 3. Qayta ishlash — `recycling.tsx`
+- Search + 8-type filter tabs, Haversine distance sort, stat chips, directions button
+- Card names display fully (no truncation), pull-to-refresh
 
-### Recycling Screen — `recycling.tsx`
-- Full text search (name, address)
-- Filter tabs: All, Paper, Plastic, Mixed, Glass, Hazardous, Bins, Avtomatlar
-- Distance sorting via Haversine (after location permission)
-- Stat chips with type counts
-- Directions button per item
-- Pull-to-refresh (all 3 data sources)
+### 4. Eko-Do'kon — `shop.tsx`
+- Auth gate for guests, balance card (yashil karta), 4-category filter (Transport, Oziq-ovqat, Ko'rik, Mahsulot)
+- 2-column product grid, "Yetarli emas" disabled state
+- Purchase confirmation bottom sheet (price + balance + remaining)
+- Xaridlar tarixi tab (paginated history), haptics, pull-to-refresh
 
-### Profile Screen — `profile.tsx`
-- Guest view with login CTA when not authenticated
-- Eco-score with level badge and progress bar
-- 5 levels: Eko-boshlovchi → Eko-faol → Tabiat himoyachisi → Yashil elchi → Eko-qahramon
-- 7 achievements with lock/unlock states
-- Leaderboard (top 5 by eco-score)
-- My recent reports (last 3)
-- Stats: report count, verification count, confirmations, achievements
-- Edit name inline modal
-- Sign out with confirmation
-- Pull-to-refresh (profile + queries)
-- About section (author: Yursinaliyev Muhammadaziz)
+### 5. Profil — `profile.tsx`
+- Guest view with login CTA; logged-in: eco-score, 5 levels, 7 achievements, leaderboard, recent reports
+- Edit name modal, sign out, pull-to-refresh
 
-### Auth Screen — `auth.tsx`
-- Email/password login and signup toggle (segmented control)
-- **Visual input focus states** (green border + green background on active field)
-- **Inline field validation errors** (under each field, not just alerts)
-- Password strength indicator during signup
-- Forgot password flow (sends reset email)
-- Uzbek-localized error messages
-- Haptic feedback on success/error/validation fail
+### 6. Auth — `auth.tsx` (modal)
+- Login/signup toggle, visual focus states, inline validation, password strength, forgot password, haptics
 
-### Report Detail — `report-detail.tsx`
-- Photo hero image, issue type badge
-- Confirmation count + confirm button (+1 ball, haptic)
-- Share button, map link (native maps)
-- Real comments system with author initials avatar
-- `KeyboardAvoidingView` for comment input
-- Haptic feedback on confirm success/error and comment send
+### 7. Hisobot qo'shish — `report-modal.tsx` (modal)
+- Auth gate → 3-step wizard (type → photo+desc → GPS), +10 eko-ball, Share, haptics
 
-### Eko-Do'kon — `shop.tsx`
-- **Auth gate** for guests (benefit list + CTA to login)
-- Balance card showing current eko-ball count (yashil karta)
-- Category filter chips: Barchasi, Transport, Oziq-ovqat, Ko'rik, Mahsulot
-- 2-column product grid — emoji icon, name, price badge, "Sotib olish" button
-- Disabled state ("Yetarli emas") if balance is insufficient
-- Bottom sheet purchase confirmation — shows price, current balance, remaining after purchase
-- Haptic feedback on success/error
-- "Xaridlar tarixi" tab — paginated purchase history with emoji + name + date + balls spent
-- Pull-to-refresh (items + purchases + profile balance)
+### 8. Hisobot tafsiloti — `report-detail.tsx` (stack)
+- Photo hero, confirm (+1 ball), comments with KeyboardAvoidingView, share, haptics
 
-### Settings Screen — `settings.tsx`
-- **Auth-aware**: shows user account card + sign-out when logged in; shows login CTA when guest
-- App banner with version
-- 4-step how-to guide
-- Mission/about section
-- Feedback email link, privacy/terms links
-- Author credit
+### 9. Sozlamalar — `settings.tsx` (stack)
+- Auth-aware (user card OR login CTA), how-to guide, mission, author credit
 
 ## Key Environment Variables
 
@@ -106,65 +57,92 @@ A production-grade Triple-AAA Expo React Native mobile app for reporting environ
 
 ## Supabase Setup
 
-Run `supabase-final.sql` in the Supabase Dashboard SQL Editor to create all tables, functions, RLS policies, and seed data.
+Run `supabase-final.sql` in the Supabase Dashboard → SQL Editor.
 
-**Tables:**
-- `reports` — environmental reports with `issue_type`, GPS coords, photo_url
-- `recycling_points` — recycling centers (paper/plastic/mixed/glass/hazardous)
-- `waste_bins` — waste bin locations by bin_type
-- `reverse_vending_machines` — plastic bottle return machines with reward info
-- `profiles` — user eco-score, level, full_name (auto-created on signup)
-- `report_comments` — comments with author_name
-- `report_confirmations` — prevents duplicate confirmations
-- `verification_audit` — logs all verify_point actions
+**Tables:** `reports`, `recycling_points`, `waste_bins`, `reverse_vending_machines`, `profiles`, `report_comments`, `report_confirmations`, `verification_audit`, `shop_items`, `purchases`
 
-**Functions:**
-- `confirm_report(report_id, confirming_user_id)` — safe confirmation
+**RPC Functions:**
+- `confirm_report(report_id, confirming_user_id)` — +1 ball, duplicate-safe
 - `increment_eco_score(user_id, points)` — upsert with auto-level
-- `verify_point(p_point_type, p_point_id, p_user_id)` — +5 eko-ball per verification
+- `verify_point(p_point_type, p_point_id, p_user_id)` — +5 ball, logged
 - `handle_new_user()` — trigger to create profile on signup
+- `purchase_item(p_item_id, p_user_id)` — deduct balls, record purchase
 
 **Storage:** Create bucket `report-photos` (public) in Supabase Dashboard.
+
+**Seed data:** 35 recycling points, 15 waste bins, 5 reverse vending machines, 14 shop items across Uzbekistan.
 
 ## File Structure
 
 ```
 app/
-  _layout.tsx           # Root layout: providers, fonts, error boundary
+  _layout.tsx             # Root layout: local font loading, providers, error boundary
   (tabs)/
-    _layout.tsx         # Tab layout (NativeTabs iOS 26 / BlurView classic)
-    index.native.tsx    # Native map screen (Google Maps, 8 layers, bottom sheet)
-    index.tsx           # Web fallback (report list)
-    reports.tsx         # Reports list — search, sort, filter, pull-to-refresh
-    recycling.tsx       # Recycling + bins + machines — search, filter, distance, pull-to-refresh
-    profile.tsx         # Profile — eco-score, achievements, leaderboard, pull-to-refresh
-  auth.tsx              # Login/signup — focus states, inline validation, haptics
-  report-modal.tsx      # Auth gate + 3-step report wizard, haptics
-  report-detail.tsx     # Report detail — confirm, comments, keyboard, haptics
-  settings.tsx          # Auth-aware settings — user card OR login CTA
+    _layout.tsx           # 5-tab layout (NativeTabs iOS 26 / BlurView classic)
+    index.native.tsx      # Native map (Google Maps, 8 layers, bottom sheet)
+    index.tsx             # Web fallback (report list + stat chips)
+    reports.tsx           # Reports — search, filter, sort, pull-to-refresh
+    recycling.tsx         # Recycling + bins + machines — full names, no truncation
+    shop.tsx              # Eko-Do'kon — balance card, grid, purchase modal, history
+    profile.tsx           # Profile — eco-score, achievements, leaderboard
+  auth.tsx                # Login/signup modal
+  report-modal.tsx        # Auth gate + 3-step wizard
+  report-detail.tsx       # Detail — confirm, comments, keyboard
+  settings.tsx            # Auth-aware settings
+assets/
+  fonts/                  # Nunito TTF files (local, no CDN)
+    Nunito_400Regular.ttf
+    Nunito_600SemiBold.ttf
+    Nunito_700Bold.ttf
+    Nunito_800ExtraBold.ttf
+  images/                 # icon.png, splash-icon.png, adaptive Android icons
+web/
+  index.html              # Web template: font timeout suppression handler
 components/
-  ErrorBoundary.tsx     # App-level crash recovery
-  NotificationHandler.tsx  # Push notification setup (native-only, safe)
+  ErrorBoundary.tsx
+  NotificationHandler.tsx
 context/
-  AuthContext.tsx       # Supabase session + profile state
+  AuthContext.tsx
 hooks/
-  useHaptics.ts         # Centralized haptic feedback hook
+  useHaptics.ts
 lib/
-  supabase.ts           # Client + types + RPC helpers
-  query-client.ts       # React Query client
-  maps-stub.web.js      # Web stub for react-native-maps (prevents bundle error)
+  supabase.ts             # Client + all types (ShopItem, Purchase, etc.) + RPC helpers
+  query-client.ts
+  maps-stub.web.js
 constants/
-  colors.ts             # Green theme (#2E7D32 primary)
-  shadow.ts             # Cross-platform shadow presets
-metro.config.cjs        # resolveRequest hook to redirect maps on web
-supabase-final.sql      # Complete DB schema + functions + seed data
+  colors.ts               # #2E7D32 primary green
+  shadow.ts
+metro.config.cjs
+supabase-final.sql        # Complete schema + seed + shop tables
 ```
 
 ## Architecture Notes
 
-- Web bundling: `metro.config.cjs` swaps `react-native-maps` → `lib/maps-stub.web.js` on web
-- Haptics: `hooks/useHaptics.ts` wraps `expo-haptics` with dynamic import (safe on web)
-- Distance sorting: client-side Haversine formula (no server needed)
-- Photos: Supabase Storage `report-photos` bucket (public, no RLS on reads)
-- Eco-score: managed via Supabase RPC with conflict-safe upserts
-- Auth state: `AuthContext` with `onAuthStateChange` listener, profile auto-fetch
+- **Fonts**: Local TTF via `Font.loadAsync` (native) / native `window.FontFace` API (web) — no CDN, no timeout
+- **Web font errors**: `window.addEventListener('unhandledrejection', ...)` in `web/index.html` suppresses Metro overlay
+- **Web bundling**: `metro.config.cjs` swaps `react-native-maps` → `lib/maps-stub.web.js`
+- **Haptics**: `hooks/useHaptics.ts` wraps `expo-haptics` with dynamic import (safe on web)
+- **Distance sorting**: client-side Haversine (no server needed)
+- **Photos**: Supabase Storage `report-photos` bucket (public)
+- **Eco-score**: Supabase RPC with conflict-safe upserts
+- **Auth**: `AuthContext` with `onAuthStateChange`, profile auto-fetch
+- **Touch targets**: All interactive elements ≥44pt (Apple HIG compliant)
+- **Safe areas**: `useSafeAreaInsets()` on all screens, no hardcoded padding
+- **Tab bar**: 84px height, paddingBottom 34 (home indicator safe)
+
+## App Store Readiness
+
+- `app.json`: bundle ID `com.ecoxarita`, version `1.0.0`, portrait only
+- Google Maps API key configured (iOS + Android)
+- `ITSAppUsesNonExemptEncryption: false` (no export compliance needed)
+- Custom eco-leaf app icon (all sizes), green splash screen `#2E7D32`
+- EAS project ID: `e26973a4-7a5d-4431-a0ec-1949f4290695`
+- Owner: `uz_dev`
+- Author: Yursinaliyev Muhammadaziz (yursinaliyevm@gmail.com)
+
+## User Preferences
+
+- All UI text in Uzbek (O'zbekcha) — no English in the app UI
+- Primary color: #2E7D32 (dark green)
+- Font: Nunito (Regular/SemiBold/Bold/ExtraBold)
+- No emoji in file comments or code
