@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="uz">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="theme-color" content="#2E7D32" />
+    <title>Eco-Xarita</title>
+    <style>
+      html, body, #root { height: 100%; margin: 0; padding: 0; }
+      body { overflow: hidden; background-color: #F8FAF8; }
+      * { box-sizing: border-box; }
+    </style>
+    <script>
+      window.addEventListener('unhandledrejection', function(event) {
+        var msg = event.reason && (event.reason.message || String(event.reason));
+        if (msg && (msg.indexOf('timeout exceeded') !== -1 || msg.indexOf('Font') !== -1 || msg.indexOf('font') !== -1)) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
