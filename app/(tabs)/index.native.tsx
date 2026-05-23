@@ -643,7 +643,7 @@ const styles = StyleSheet.create({
   appName: { fontFamily: "Nunito_800ExtraBold", fontSize: 18, color: C.text },
   headerActions: { flexDirection: "row", gap: 6 },
   iconBtn: {
-    width: 36, height: 36, borderRadius: 10,
+    width: 44, height: 44, borderRadius: 13,
     backgroundColor: "#F3F4F6",
     alignItems: "center", justifyContent: "center",
   },

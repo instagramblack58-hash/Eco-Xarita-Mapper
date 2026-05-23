@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
   locationText: { fontFamily: "Nunito_400Regular", fontSize: 11, color: C.textSecondary },
   chevron: { marginRight: 10 },
 
-  empty: { alignItems: "center", paddingTop: 80, gap: 10, paddingHorizontal: 32 },
+  empty: { alignItems: "center", paddingTop: 48, gap: 10, paddingHorizontal: 32 },
   emptyTitle: { fontFamily: "Nunito_700Bold", fontSize: 18, color: C.text, textAlign: "center" },
   emptySub: { fontFamily: "Nunito_400Regular", fontSize: 14, color: C.textSecondary, textAlign: "center" },
   emptyBtn: {

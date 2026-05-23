@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  empty: { alignItems: "center", paddingTop: 80, gap: 8 },
+  empty: { alignItems: "center", paddingTop: 48, gap: 8, paddingHorizontal: 24 },
   emptyTitle: { fontFamily: "Nunito_700Bold", fontSize: 18, color: C.text },
   emptySub: { fontFamily: "Nunito_400Regular", fontSize: 14, color: C.textSecondary },
 });

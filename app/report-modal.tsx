@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
     backgroundColor: C.border, alignSelf: "center", marginBottom: 12,
   },
   navRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
-  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#F3F4F6", alignItems: "center", justifyContent: "center" },
+  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#F3F4F6", alignItems: "center", justifyContent: "center" },
   navTitle: { fontFamily: "Nunito_700Bold", fontSize: 17, color: C.text },
   stepIndicator: { backgroundColor: "#E8F5E9", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   stepText: { fontFamily: "Nunito_700Bold", fontSize: 12, color: C.primary },

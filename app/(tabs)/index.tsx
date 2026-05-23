@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   sectionLink: { fontFamily: "Nunito_600SemiBold", fontSize: 13, color: C.primary },
   list: { paddingHorizontal: 14, gap: 10 },
   loadingText: { fontFamily: "Nunito_400Regular", fontSize: 14, color: C.textSecondary, textAlign: "center", marginTop: 40 },
-  empty: { alignItems: "center", paddingTop: 60, gap: 12 },
+  empty: { alignItems: "center", paddingTop: 36, gap: 12, paddingHorizontal: 24 },
   emptyTitle: { fontFamily: "Nunito_700Bold", fontSize: 16, color: C.text },
   emptyBtn: { backgroundColor: C.primary, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12 },
   emptyBtnText: { fontFamily: "Nunito_700Bold", fontSize: 14, color: "#fff" },

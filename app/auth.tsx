@@ -385,10 +385,10 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1, paddingHorizontal: 24 },
   closeBtn: {
     alignSelf: "flex-end",
-    width: 36, height: 36, borderRadius: 18,
+    width: 44, height: 44, borderRadius: 22,
     backgroundColor: "#F3F4F6",
     alignItems: "center", justifyContent: "center",
-    marginBottom: 24,
+    marginBottom: 16,
   },
   logoRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 24 },
   logoText: { fontFamily: "Nunito_800ExtraBold", fontSize: 26, color: C.text },

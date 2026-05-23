@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontFamily: "Nunito_800ExtraBold", fontSize: 26, color: C.text },
   headerActions: { flexDirection: "row", gap: 8 },
   iconBtn: {
-    width: 36, height: 36, borderRadius: 12, backgroundColor: "#F3F4F6",
+    width: 44, height: 44, borderRadius: 14, backgroundColor: "#F3F4F6",
     alignItems: "center", justifyContent: "center",
   },
 
@@ -585,7 +585,7 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.border,
   },
-  reportIcon: { width: 32, height: 32, borderRadius: 8, backgroundColor: "#E8F5E9", alignItems: "center", justifyContent: "center" },
+  reportIcon: { width: 38, height: 38, borderRadius: 10, backgroundColor: "#E8F5E9", alignItems: "center", justifyContent: "center" },
   reportContent: { flex: 1 },
   reportDesc: { fontFamily: "Nunito_600SemiBold", fontSize: 13, color: C.text },
   reportMeta: { fontFamily: "Nunito_400Regular", fontSize: 11, color: C.textSecondary, marginTop: 2 },
@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
     backgroundColor: C.surface, borderRadius: 16, ...sh.sm, overflow: "hidden",
   },
   menuItem: { flexDirection: "row", alignItems: "center", padding: 16, gap: 12 },
-  menuIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  menuIcon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   menuLabel: { flex: 1, fontFamily: "Nunito_600SemiBold", fontSize: 15, color: C.text },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: C.border, marginLeft: 64 },
 
