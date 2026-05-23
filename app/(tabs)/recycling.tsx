@@ -97,7 +97,7 @@ function ItemCard({ item }: { item: ListItem }) {
         <MaterialCommunityIcons name={cfg.icon as any} size={26} color={cfg.color} />
       </View>
       <View style={styles.cardBody}>
-        <Text style={styles.cardName} numberOfLines={2}>{name}</Text>
+        <Text style={styles.cardName}>{name}</Text>
         <View style={styles.cardMeta}>
           <View style={[styles.badge, { backgroundColor: cfg.bg }]}>
             <Text style={[styles.badgeText, { color: cfg.color }]}>{label}</Text>
