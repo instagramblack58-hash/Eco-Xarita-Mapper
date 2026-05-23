@@ -97,15 +97,15 @@ function ItemCard({ item }: { item: ListItem }) {
         <MaterialCommunityIcons name={cfg.icon as any} size={26} color={cfg.color} />
       </View>
       <View style={styles.cardBody}>
-        <View style={styles.cardTop}>
-          <Text style={styles.cardName} numberOfLines={1}>{name}</Text>
+        <Text style={styles.cardName} numberOfLines={2}>{name}</Text>
+        <View style={styles.cardMeta}>
           <View style={[styles.badge, { backgroundColor: cfg.bg }]}>
             <Text style={[styles.badgeText, { color: cfg.color }]}>{label}</Text>
           </View>
         </View>
         <View style={styles.addressRow}>
           <Ionicons name="location-outline" size={12} color={C.textSecondary} />
-          <Text style={styles.addressText} numberOfLines={1}>{address}</Text>
+          <Text style={styles.addressText} numberOfLines={2}>{address}</Text>
         </View>
         {item.dist !== undefined && (
           <Text style={styles.distText}>{formatDist(item.dist)} uzoqda</Text>
@@ -450,8 +450,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   cardBody: { flex: 1, gap: 3 },
-  cardTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  cardName: { fontFamily: "Nunito_700Bold", fontSize: 14, color: C.text, flex: 1, marginRight: 6 },
+  cardMeta: { flexDirection: "row", alignItems: "center" },
+  cardName: { fontFamily: "Nunito_700Bold", fontSize: 14, color: C.text },
   badge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 20 },
   badgeText: { fontFamily: "Nunito_600SemiBold", fontSize: 11 },
   addressRow: { flexDirection: "row", alignItems: "center", gap: 3 },
