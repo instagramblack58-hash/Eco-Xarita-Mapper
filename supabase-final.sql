@@ -403,6 +403,99 @@ INSERT INTO reverse_vending_machines (lat, lng, name, address, operator, reward_
 ON CONFLICT DO NOTHING;
 
 -- =============================================
+-- ECO-SHOP: shop_items table
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS shop_items (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name_uz text NOT NULL,
+  description_uz text NOT NULL DEFAULT '',
+  price_balls integer NOT NULL CHECK (price_balls > 0),
+  category text NOT NULL CHECK (category IN ('transport', 'oziq-ovqat', 'korik', 'mahsulot')),
+  emoji text NOT NULL DEFAULT '🎁',
+  is_active boolean DEFAULT true,
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE shop_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "shop_items_read" ON shop_items;
+CREATE POLICY "shop_items_read" ON shop_items FOR SELECT USING (true);
+
+-- =============================================
+-- ECO-SHOP: purchases table
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS purchases (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  item_id uuid NOT NULL REFERENCES shop_items(id),
+  balls_spent integer NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE purchases ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "purchases_own_read" ON purchases;
+DROP POLICY IF EXISTS "purchases_insert" ON purchases;
+CREATE POLICY "purchases_own_read" ON purchases FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "purchases_insert" ON purchases FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- =============================================
+-- ECO-SHOP: purchase_item RPC
+-- =============================================
+
+CREATE OR REPLACE FUNCTION purchase_item(p_item_id uuid, p_user_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_price integer;
+  v_balance integer;
+  v_item_name text;
+BEGIN
+  SELECT price_balls, name_uz INTO v_price, v_item_name
+  FROM shop_items WHERE id = p_item_id AND is_active = true;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Mahsulot topilmadi');
+  END IF;
+
+  SELECT eco_score INTO v_balance
+  FROM profiles WHERE user_id = p_user_id;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Profil topilmadi');
+  END IF;
+
+  IF v_balance < v_price THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Balansingiz yetarli emas');
+  END IF;
+
+  UPDATE profiles SET eco_score = eco_score - v_price WHERE user_id = p_user_id;
+  INSERT INTO purchases (user_id, item_id, balls_spent) VALUES (p_user_id, p_item_id, v_price);
+
+  RETURN jsonb_build_object('success', true, 'item_name', v_item_name, 'balls_spent', v_price);
+END;
+$$;
+
+-- =============================================
+-- ECO-SHOP: Seed data
+-- =============================================
+
+INSERT INTO shop_items (name_uz, description_uz, price_balls, category, emoji) VALUES
+  ('Metro bilet',           'Toshkent metro tarmog''ida bir marta foydalanish',            150, 'transport',  '🚇'),
+  ('Avtobus bilet (10 ta)', '10 ta avtobus safari uchun to''ldirish',                      100, 'transport',  '🚌'),
+  ('Tramvay bilet (5 ta)',  'Toshkent tramvay yo''nalishi uchun 5 ta bilet',                60, 'transport',  '🚋'),
+  ('Eko-sumka',             'Qayta ishlangan materialdan yasalgan ulkan xarid sumkasi',    120, 'mahsulot',   '🛍️'),
+  ('Daraxt ko''chati',      'Shahar ko''kalamzorlashtirish uchun yosh daraxt',              80, 'mahsulot',   '🌱'),
+  ('Eko-daftar',            'Qayta ishlangan qog''ozdan yasalgan 96 varaqli daftar',        50, 'mahsulot',   '📓'),
+  ('Bambuk qoshiq to''plami','Bir martalik plastikni almashtiruvchi bambuk to''plam',       45, 'mahsulot',   '🥢'),
+  ('Toshkent Botanical bog''i', 'Botanika bog''iga kirish chiptasi (1 kishi)',             90,  'korik',      '🌳'),
+  ('Toshkent Zoo kirish',   'Hayvonot bog''iga kirish chiptasi (1 kishi)',                 200, 'korik',      '🦁'),
+  ('Tarix muzeyi kirish',   'O''zbekiston tarixi davlat muzeyi kirish chiptasi',            80, 'korik',      '🏛️'),
+  ('Alisher Navoiy teatri', 'Milliy opera va balet teatri kirish chiptasi',                300, 'korik',      '🎭'),
+  ('Mineral suv (1 L)',     'Sog''lom ichimlik suvi — tabiatga zarar keltirmaydigan',       30, 'oziq-ovqat', '💧'),
+  ('Yashil choy',           'Mahalliy o''stirilgan yashil choy (50 g)',                     40, 'oziq-ovqat', '🍵'),
+  ('Organik meva to''plami','Mavsumiy mahalliy organik mevalar to''plami (1 kg)',           70, 'oziq-ovqat', '🍎')
+ON CONFLICT DO NOTHING;
+
+-- =============================================
 -- REALTIME SUBSCRIPTIONS
 -- Enable realtime for reports in Supabase Dashboard:
 -- Database → Replication → supabase_realtime publication → Add table: reports

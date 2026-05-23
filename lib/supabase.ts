@@ -123,6 +123,25 @@ export type SavedLocation = {
   created_at: string;
 };
 
+export type ShopItem = {
+  id: string;
+  name_uz: string;
+  description_uz: string;
+  price_balls: number;
+  category: "transport" | "oziq-ovqat" | "korik" | "mahsulot";
+  emoji: string;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type Purchase = {
+  id: string;
+  user_id: string;
+  item_id: string;
+  balls_spent: number;
+  created_at: string;
+};
+
 // ===== Helpers =====
 
 export async function incrementEcoScore(userId: string, points: number) {

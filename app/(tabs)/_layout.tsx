@@ -21,6 +21,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "arrow.3.trianglepath", selected: "arrow.3.trianglepath" }} />
         <Label>Qayta ishlash</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="shop">
+        <Icon sf={{ default: "storefront", selected: "storefront.fill" }} />
+        <Label>Do'kon</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: "person", selected: "person.fill" }} />
         <Label>Profil</Label>
@@ -93,6 +97,16 @@ function ClassicTabLayout() {
           tabBarIcon: ({ color, size }) => {
             const { MaterialCommunityIcons } = require("@expo/vector-icons");
             return <MaterialCommunityIcons name="recycle" size={size} color={color} />;
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="shop"
+        options={{
+          title: "Do'kon",
+          tabBarIcon: ({ color, size }) => {
+            const { Ionicons } = require("@expo/vector-icons");
+            return <Ionicons name="storefront" size={size} color={color} />;
           },
         }}
       />

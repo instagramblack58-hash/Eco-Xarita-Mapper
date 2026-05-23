@@ -79,6 +79,17 @@ A production-grade Triple-AAA Expo React Native mobile app for reporting environ
 - `KeyboardAvoidingView` for comment input
 - Haptic feedback on confirm success/error and comment send
 
+### Eko-Do'kon — `shop.tsx`
+- **Auth gate** for guests (benefit list + CTA to login)
+- Balance card showing current eko-ball count (yashil karta)
+- Category filter chips: Barchasi, Transport, Oziq-ovqat, Ko'rik, Mahsulot
+- 2-column product grid — emoji icon, name, price badge, "Sotib olish" button
+- Disabled state ("Yetarli emas") if balance is insufficient
+- Bottom sheet purchase confirmation — shows price, current balance, remaining after purchase
+- Haptic feedback on success/error
+- "Xaridlar tarixi" tab — paginated purchase history with emoji + name + date + balls spent
+- Pull-to-refresh (items + purchases + profile balance)
+
 ### Settings Screen — `settings.tsx`
 - **Auth-aware**: shows user account card + sign-out when logged in; shows login CTA when guest
 - App banner with version
