@@ -1,0 +1,193 @@
+Generate a complete, production‑ready Expo React Native app called "Eco-Xarita" (Eco Map) for Uzbekistan. The app enables citizens to report environmental issues, find recycling points, and participate in a circular economy by recycling plastic bottles in exchange for rewards. The app must be built as a scalable startup, ready for deployment, with a professional UI, full functionality, and a clear path to monetisation.
+
+## Tech Stack
+- Expo SDK 52 (React Native 0.76, TypeScript)
+- Expo Router (file‑based routing, tabs, modals)
+- Supabase (PostgreSQL, Auth, Storage, Realtime) – but designed to be easily migrated to a custom backend later.
+- Google Maps (react-native-maps) – NOT Yandex.
+- State Management: TanStack React Query (caching, offline support) + React Context for auth.
+- UI: Custom styles, Nunito font, responsive, dark/light mode optional.
+- Navigation: Bottom tabs: Map, Reports, Recycling, Profile.
+- Additional libraries: @gorhom/bottom-sheet, expo-image-picker, expo-location, expo-notifications, expo-haptics, react-native-gesture-handler, react-native-reanimated.
+
+## Core Features (must be fully functional)
+
+### 1. Authentication
+- Signup/Login with email/password via Supabase Auth.
+- Persistent session, auto-login.
+- Profile update (full name, optional avatar).
+- Password reset flow (optional but recommended).
+
+### 2. Interactive Map (Google Maps)
+- Default view centered on Uzbekistan (41.0, 69.0) with zoom 6.
+- Markers for:
+  - Reports (red) – user‑submitted environmental issues.
+  - Recycling points (colored by type: paper=blue, plastic=purple, mixed=green, glass=orange, hazardous=black).
+  - Waste bins (teal) – with sub‑types: plastic, paper, glass, general.
+  - Reverse vending machines (gold) – machines that accept bottles and give rewards.
+- User location blue dot, button to center on user.
+- Layer toggle panel (show/hide each marker type).
+- Marker clustering (using react-native-maps-clustering or similar).
+- Tap marker → bottom sheet popup with details (description, photo, confirmations, distance, reward info for machines) and action buttons:
+  - "Yo'nalish" – opens native maps app for directions.
+  - "Tasdiqlash" – (verify) – only for authenticated users. Calls a Supabase RPC `verify_point` that increments a verification counter and logs the action.
+- On map tap (not on marker), close any open popup.
+
+### 3. Report an Issue
+- FAB button (+) opens a modal with:
+  - Issue type dropdown (illegal dumping, tree cutting, water pollution, air pollution, other) with icons.
+  - Photo picker (camera/gallery) – upload to Supabase Storage bucket `report-photos`.
+  - Description (optional).
+  - Automatic geolocation (with fallback to manual map placement using a mini‑map).
+- Submits to `reports` table with lat, lng, description, photo_url, user_id, issue_type, confirmations_count (default 0).
+- After submission, user gets a confirmation and option to share on social media.
+
+### 4. Reports List
+- Tab `reports.tsx` shows all reports (paginated with React Query) sorted by newest.
+- Each item: photo thumbnail, issue type badge, description preview, confirmations count, time ago.
+- Tap to open detail screen (`report-detail.tsx`) with:
+  - Full image (zoomable).
+  - Full description, issue type.
+  - Map view showing exact location.
+  - Confirmation button (increments via RPC) – only for authenticated users.
+  - Share button (share via expo-sharing).
+  - Comments section (placeholder for future).
+
+### 5. Recycling & Reverse Vending Machines
+- Tab `recycling.tsx` – combined list of recycling points, waste bins, and reverse vending machines.
+- Filter by type: paper, plastic, mixed, glass, hazardous, bins, machines.
+- Each item shows name, address, distance (if location granted), type badge, and a directions button.
+- For machines, also display reward type (cheque/bonus/discount/money) and reward description.
+- Tap opens a detail modal (or screen) with full info, a mini‑map, and a "Yo'nalish" button.
+- For machines, show current status (active/maintenance/inactive) and working hours.
+
+### 6. User Profile (Gamified)
+- Tab `profile.tsx` shows:
+  - Avatar (generated from initials or uploaded).
+  - Full name (editable via modal).
+  - Email.
+  - Eco‑score and level (with progress bar to next level).
+    Levels: Eko‑boshlovchi (0), Eko‑faol (100), Tabiat himoyachisi (500), Yashil elchi (1000), Eko‑qahramon (5000).
+  - Statistics: total reports submitted, total confirmations received, total verifications made.
+  - Achievements grid (unlocked/locked): first report, 5 reports, 20 reports, 10 confirmations, 50 confirmations, 100 points, 1000 points.
+  - Leaderboard (top 5 users by eco‑score) – fetched from `profiles` table.
+  - List of user's own reports (with quick actions: view, delete?).
+  - About section: developer name, email, version.
+  - Sign out button.
+  - Settings option (placeholder for notifications, etc.).
+
+### 7. Verification System
+- On any marker popup (report, recycling point, bin, machine), authenticated users see a "Tasdiqlash" button.
+- Clicking calls `verify_point(point_type, point_id, user_id)` RPC.
+- RPC increments `verification_count` and sets `last_verified_at` on the corresponding table, and inserts a record into `verification_audit`.
+- UI shows success alert and refreshes data (invalidate queries).
+- Profile shows total verifications made.
+
+### 8. Reverse Vending Machine Management
+- Admin panel (accessible only to users with role 'admin' – set in profiles table) to add/edit/delete machines.
+- For MVP, implement a simple admin screen (accessible from profile if user is admin) with a form to add new machines (lat, lng, name, address, operator, reward_type, reward_description, working_hours, phone, photo_url, status).
+- Alternatively, allow any authenticated user to suggest a new machine (pending approval) – but for startup, admin control is simpler.
+
+### 9. Real‑time Updates
+- Use Supabase Realtime to update reports and markers live (when new report is inserted, map updates automatically).
+
+### 10. Offline Support
+- React Query's `persistQueryClient` with AsyncStorage to cache data (reports, recycling points, machines) for offline viewing.
+- Allow submitting reports when offline – queue them and sync when online (optional for MVP, but bonus).
+
+### 11. Push Notifications
+- Use Expo Notifications to send push notifications when:
+  - User's report is confirmed by someone else.
+  - A new recycling point/machine is added nearby (optional).
+- Handle notification taps to navigate to the relevant screen.
+
+### 12. Monetisation & Business Logic
+- In-app ads (AdMob) – optional but could be integrated for revenue.
+- Premium business listings (recycling companies pay to be featured) – not yet, but design the database with a `is_featured` column.
+- Data API for government (provide anonymised data via a web dashboard) – for future.
+
+### 13. Admin Web Dashboard (Bonus)
+- Generate a simple web dashboard (using React or Next.js) that shows:
+  - Total reports, active users, points, etc.
+  - List of pending reports (to verify or act on).
+  - Ability to mark reports as "resolved".
+- For MVP, this can be a separate repository, but you can include it as part of the same prompt to generate both.
+
+### 14. Database Schema (Supabase SQL)
+- Generate a full SQL script that creates:
+  - `profiles` (extends auth.users): user_id, eco_score, level, avatar_url, full_name, role (user/admin)
+  - `reports` (as described)
+  - `recycling_points` (with is_verified, source, verification_count, last_verified_at)
+  - `waste_bins` (with verification_count, last_verified_at)
+  - `reverse_vending_machines` (with verification_count, last_verified_at)
+  - `verification_audit` (user_id, point_type, point_id, created_at)
+  - `rewards` (optional – for tracking reward redemptions)
+- Add RLS policies: anyone can read; authenticated can insert/update their own reports; admin can insert/update any table; verification_audit only insert by authenticated.
+- RPC `verify_point` as described.
+- RPC `increment_eco_score(user_id, points)`.
+- Triggers: when a report is inserted, auto‑increment user's reports count? (optional)
+- Seed data: insert at least 5 recycling points, 3 waste bins, and 2 reverse vending machines in Tashkent with realistic coordinates and details.
+
+### 15. Environment Variables
+- EXPO_PUBLIC_SUPABASE_URL
+- EXPO_PUBLIC_SUPABASE_ANON_KEY
+- EXPO_PUBLIC_GOOGLE_MAPS_KEY
+- EXPO_PUBLIC_GOOGLE_ANALYTICS_ID (optional)
+- EXPO_PUBLIC_ADMOB_ANDROID (optional)
+
+### 16. Configuration Files
+- `app.json` – proper app name, icon, splash, permissions.
+- `eas.json` – with preview (APK) and production profiles, Node.js 20 specified.
+- `tsconfig.json` – strict mode, paths.
+- `metro.config.js` (or .cjs) – properly configured.
+- `babel.config.js` (or .cjs) – with reanimated plugin.
+- `.gitignore` – ignore node_modules, .expo, android, ios, etc.
+
+### 17. GitHub Actions Workflow
+- Provide `.github/workflows/build-apk.yml` that builds APK on push using EAS, with secrets for EXPO_TOKEN and environment variables.
+
+### 18. Professional UI/UX
+- Use a cohesive green colour scheme (#2E7D32, #4CAF50) for eco‑theme.
+- Smooth animations (react-native-reanimated).
+- Loading skeletons, error boundaries.
+- Bottom sheet popups with drag handle.
+- Use safe area insets, responsive for all screen sizes.
+- All text in Uzbek.
+
+### 19. Error Handling & Analytics
+- Global error boundary with fallback UI.
+- Log errors to a service (optional – you can use Sentry).
+- Basic analytics (optional – use expo‑analytics or just console logs for now).
+
+### 20. Documentation
+- Generate a README.md with setup instructions, environment variables, build commands, and deployment steps.
+
+## File Structure
+Generate the following files (and any others needed) in the correct directories:
+
+- `app/(tabs)/index.tsx` (MapScreen)
+- `app/(tabs)/reports.tsx`
+- `app/(tabs)/recycling.tsx`
+- `app/(tabs)/profile.tsx`
+- `app/auth.tsx`
+- `app/report-modal.tsx`
+- `app/report-detail.tsx`
+- `app/admin.tsx` (admin panel, protected by role)
+- `components/` – reusable components (BottomSheetPopup, VerificationButton, Loading, ErrorBoundary, etc.)
+- `lib/supabase.ts` – client, types, RPC helpers.
+- `lib/query-client.ts` – React Query client with persister.
+- `context/AuthContext.tsx` – auth state and profile.
+- `constants/colors.ts` – theme.
+- `hooks/` – custom hooks (useAuth, useLocation, etc.).
+- `supabase-final.sql` – full database schema.
+- `app.json`, `eas.json`, `tsconfig.json`, `metro.config.cjs`, `babel.config.cjs`, `.gitignore`, `README.md`.
+- `.github/workflows/build-apk.yml` – GitHub Actions for EAS build.
+
+## Acceptance Criteria
+- The app must compile and run without errors in a development build.
+- All core features must be functional (map markers, reporting, list views, profile, verification).
+- The SQL script must be executable in Supabase without errors.
+- The app must have a polished, professional look suitable for a startup pitch.
+- The code must be well‑structured, typed, and commented.
+
+Generate the complete code for every file. Do not skip any. The app must be ready to deploy to Galaxy Store immediately after setting environment variables and running the SQL script.
