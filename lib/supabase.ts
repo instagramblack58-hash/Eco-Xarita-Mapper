@@ -112,6 +112,7 @@ export type Profile = {
   avatar_url: string | null;
   full_name: string | null;
   created_at: string;
+  role?: "user" | "admin";
 };
 
 export type SavedLocation = {

@@ -414,6 +414,18 @@ export default function ProfileScreen() {
             <Text style={styles.menuLabel}>Sozlamalar</Text>
             <Ionicons name="chevron-forward" size={16} color={C.textSecondary} />
           </TouchableOpacity>
+          {profile?.role === "admin" && (
+            <>
+              <View style={styles.divider} />
+              <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/admin")}>
+                <View style={[styles.menuIcon, { backgroundColor: "#FEF3C7" }]}>
+                  <Ionicons name="shield-checkmark-outline" size={20} color="#D97706" />
+                </View>
+                <Text style={[styles.menuLabel, { color: "#D97706" }]}>Admin panel</Text>
+                <Ionicons name="chevron-forward" size={16} color="#D97706" />
+              </TouchableOpacity>
+            </>
+          )}
           <View style={styles.divider} />
           <TouchableOpacity style={styles.menuItem} onPress={handleSignOut} disabled={loadingSignOut}>
             <View style={[styles.menuIcon, { backgroundColor: "#FEE2E2" }]}>

@@ -1,5 +1,5 @@
 import { sh } from "@/constants/shadow";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseConfigured } from "@/lib/supabase";
 import type { Report, IssueType } from "@/lib/supabase";
 import Colors from "@/constants/colors";
 
@@ -125,6 +125,21 @@ export default function ReportsScreen() {
     staleTime: 30_000,
     retry: 1,
   });
+
+  useEffect(() => {
+    if (!supabaseConfigured) return;
+    const channel = supabase
+      .channel("reports-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "reports" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["/api/reports"] });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
 
   const onRefresh = async () => {
     setRefreshing(true);
