@@ -24,7 +24,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useHaptics } from "@/hooks/useHaptics";
 import type { IssueType } from "@/lib/supabase";
 import Colors from "@/constants/colors";
-import { fetch } from "expo/fetch";
 
 const C = Colors.light;
 

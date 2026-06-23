@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from "react";
-import { supabase, Profile } from "@/lib/supabase";
+import { supabase, supabaseConfigured, Profile } from "@/lib/supabase";
 import type { Session, User } from "@supabase/supabase-js";
 
 interface AuthContextValue {
@@ -23,6 +23,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!supabaseConfigured) {
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) fetchProfile(session.user.id);
