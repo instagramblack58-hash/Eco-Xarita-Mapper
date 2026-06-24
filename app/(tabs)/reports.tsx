@@ -19,6 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { supabase, supabaseConfigured } from "@/lib/supabase";
 import type { Report, IssueType } from "@/lib/supabase";
 import Colors from "@/constants/colors";
+import { SkeletonReportCard } from "@/components/Skeleton";
 
 const C = Colors.light;
 
@@ -265,7 +266,15 @@ export default function ReportsScreen() {
         windowSize={5}
         removeClippedSubviews={Platform.OS === "android"}
         ListEmptyComponent={
-          !isLoading ? (
+          isLoading ? (
+            <View style={styles.skeletonWrap}>
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <View key={i} style={styles.skeletonItem}>
+                  <SkeletonReportCard />
+                </View>
+              ))}
+            </View>
+          ) : (
             <View style={styles.empty}>
               <Ionicons name="document-text-outline" size={56} color={C.border} />
               <Text style={styles.emptyTitle}>
@@ -282,7 +291,7 @@ export default function ReportsScreen() {
                 </TouchableOpacity>
               )}
             </View>
-          ) : null
+          )
         }
       />
     </View>
@@ -359,4 +368,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12, paddingHorizontal: 24, borderRadius: 12,
   },
   emptyBtnText: { fontFamily: "Nunito_700Bold", fontSize: 14, color: "#fff" },
+
+  skeletonWrap: { paddingHorizontal: 14, paddingTop: 10, gap: 10 },
+  skeletonItem: { borderRadius: 16, overflow: "hidden" },
 });

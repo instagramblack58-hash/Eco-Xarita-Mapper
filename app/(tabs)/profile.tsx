@@ -1,5 +1,5 @@
 import { sh } from "@/constants/shadow";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -13,8 +13,16 @@ import {
   TextInput,
   RefreshControl,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  Easing,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
@@ -24,11 +32,11 @@ import Colors from "@/constants/colors";
 const C = Colors.light;
 
 const LEVELS = [
-  { min: 0,    max: 99,   title: "Eko-boshlovchi",     color: "#9CA3AF", icon: "🌱" },
-  { min: 100,  max: 499,  title: "Eko-faol",            color: "#10B981", icon: "🌿" },
-  { min: 500,  max: 999,  title: "Tabiat himoyachisi",  color: "#3B82F6", icon: "🌊" },
-  { min: 1000, max: 4999, title: "Yashil elchi",        color: "#8B5CF6", icon: "🦋" },
-  { min: 5000, max: Infinity, title: "Eko-qahramon",   color: "#F59E0B", icon: "🏆" },
+  { min: 0,    max: 99,   title: "Eko-boshlovchi",    color: "#9CA3AF", icon: "🌱" },
+  { min: 100,  max: 499,  title: "Eko-faol",           color: "#10B981", icon: "🌿" },
+  { min: 500,  max: 999,  title: "Tabiat himoyachisi", color: "#3B82F6", icon: "🌊" },
+  { min: 1000, max: 4999, title: "Yashil elchi",       color: "#8B5CF6", icon: "🦋" },
+  { min: 5000, max: Infinity, title: "Eko-qahramon",  color: "#F59E0B", icon: "🏆" },
 ];
 
 type Achievement = { id: string; icon: string; title: string; desc: string; unlocked: boolean };
@@ -48,13 +56,13 @@ function getLevel(score: number) {
 
 function getAchievements(reportCount: number, totalConfirm: number, score: number): Achievement[] {
   return [
-    { id: "first",      icon: "📝", title: "Birinchi qadam",   desc: "Birinchi muammo xabarini yubordi",    unlocked: reportCount >= 1 },
-    { id: "reporter5",  icon: "🔍", title: "Ishtirokchi",      desc: "5 ta muammo xabari yubordi",          unlocked: reportCount >= 5 },
-    { id: "reporter20", icon: "📊", title: "Faol ishtirokchi", desc: "20 ta muammo xabari yubordi",         unlocked: reportCount >= 20 },
-    { id: "confirm10",  icon: "✅", title: "Tasdiqlangan",     desc: "10 ta tasdiqlash oldi",               unlocked: totalConfirm >= 10 },
-    { id: "confirm50",  icon: "🏅", title: "Ishonchli",        desc: "50 ta tasdiqlash oldi",               unlocked: totalConfirm >= 50 },
-    { id: "eco100",     icon: "🌿", title: "Eko-faol",         desc: "100 ball to'pladi",                   unlocked: score >= 100 },
-    { id: "eco1000",    icon: "🏆", title: "Eko-qahramon",     desc: "1000 ball to'pladi",                  unlocked: score >= 1000 },
+    { id: "first",      icon: "📝", title: "Birinchi qadam",   desc: "Birinchi muammo xabarini yubordi", unlocked: reportCount >= 1 },
+    { id: "reporter5",  icon: "🔍", title: "Ishtirokchi",      desc: "5 ta muammo xabari yubordi",       unlocked: reportCount >= 5 },
+    { id: "reporter20", icon: "📊", title: "Faol ishtirokchi", desc: "20 ta muammo xabari yubordi",      unlocked: reportCount >= 20 },
+    { id: "confirm10",  icon: "✅", title: "Tasdiqlangan",     desc: "10 ta tasdiqlash oldi",            unlocked: totalConfirm >= 10 },
+    { id: "confirm50",  icon: "🏅", title: "Ishonchli",        desc: "50 ta tasdiqlash oldi",            unlocked: totalConfirm >= 50 },
+    { id: "eco100",     icon: "🌿", title: "Eko-faol",         desc: "100 ball to'pladi",                unlocked: score >= 100 },
+    { id: "eco1000",    icon: "🏆", title: "Eko-qahramon",     desc: "1000 ball to'pladi",               unlocked: score >= 1000 },
   ];
 }
 
@@ -67,9 +75,51 @@ export default function ProfileScreen() {
   const [nameInput, setNameInput] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [displayScore, setDisplayScore] = useState(0);
+  const prevScoreRef = useRef(0);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  const ecoScore = profile?.eco_score ?? 0;
+  const levelInfo = getLevel(ecoScore);
+  const displayName = profile?.full_name || user?.email?.split("@")[0] || "Foydalanuvchi";
+
+  const progressAnim = useSharedValue(0);
+
+  useEffect(() => {
+    if (ecoScore === prevScoreRef.current && ecoScore === 0) return;
+    const target = ecoScore;
+    const start = prevScoreRef.current;
+    if (target === start) return;
+    const steps = 45;
+    const stepTime = 22;
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      const t = step / steps;
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplayScore(Math.round(start + (target - start) * eased));
+      if (step >= steps) {
+        setDisplayScore(target);
+        prevScoreRef.current = target;
+        clearInterval(timer);
+      }
+    }, stepTime);
+    return () => clearInterval(timer);
+  }, [ecoScore]);
+
+  useEffect(() => {
+    progressAnim.value = 0;
+    progressAnim.value = withDelay(
+      500,
+      withTiming(levelInfo.progress, { duration: 1100, easing: Easing.out(Easing.cubic) })
+    );
+  }, [levelInfo.progress]);
+
+  const progressBarStyle = useAnimatedStyle(() => ({
+    width: `${Math.min(100, progressAnim.value * 100)}%` as any,
+  }));
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -128,9 +178,6 @@ export default function ProfileScreen() {
     [myReports]
   );
 
-  const ecoScore = profile?.eco_score ?? 0;
-  const levelInfo = getLevel(ecoScore);
-  const displayName = profile?.full_name || user?.email?.split("@")[0] || "Foydalanuvchi";
   const achievements = useMemo(
     () => getAchievements(myReports.length, totalConfirmations, ecoScore),
     [myReports.length, totalConfirmations, ecoScore]
@@ -186,11 +233,7 @@ export default function ProfileScreen() {
           <Text style={styles.authSub}>
             Muammolarni tasdiqlash, xabar berish va eko-ballar to'plash uchun tizimga kiring
           </Text>
-          <TouchableOpacity
-            style={styles.authBtn}
-            onPress={() => router.push("/auth")}
-            activeOpacity={0.85}
-          >
+          <TouchableOpacity style={styles.authBtn} onPress={() => router.push("/auth")} activeOpacity={0.85}>
             <Ionicons name="log-in-outline" size={18} color="#fff" />
             <Text style={styles.authBtnText}>Kirish / Ro'yxatdan o'tish</Text>
           </TouchableOpacity>
@@ -206,97 +249,91 @@ export default function ProfileScreen() {
   return (
     <>
       <ScrollView
-        style={[styles.container, { paddingTop: topPad }]}
+        style={styles.container}
         contentContainerStyle={{ paddingBottom: bottomPad + 84 + 16 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.primary]} tintColor={C.primary} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[C.primary]}
+            tintColor="#fff"
+          />
         }
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profil</Text>
-          <View style={styles.headerActions}>
-            <TouchableOpacity onPress={refreshProfile} style={styles.iconBtn}>
-              <Ionicons name="refresh" size={18} color={C.textSecondary} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push("/settings")} style={styles.iconBtn}>
-              <Ionicons name="settings-outline" size={18} color={C.textSecondary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Profile Card */}
-        <View style={styles.profileCard}>
-          <View style={[styles.avatar, { backgroundColor: levelInfo.color }]}>
-            <Text style={styles.avatarText}>{levelInfo.icon}</Text>
-          </View>
-          <View style={styles.profileInfo}>
-            <View style={styles.nameRow}>
-              <Text style={styles.nameText} numberOfLines={1}>{displayName}</Text>
-              <TouchableOpacity onPress={openEditName} style={styles.editNameBtn}>
-                <Ionicons name="pencil" size={14} color={C.primary} />
+        {/* ─── Gradient Hero ─── */}
+        <LinearGradient
+          colors={["#1A5C1E", "#2E7D32", "#3D9142"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1.4 }}
+          style={[styles.hero, { paddingTop: topPad + 14 }]}
+        >
+          <View style={styles.heroHeader}>
+            <Text style={styles.heroTitle}>Profil</Text>
+            <View style={styles.heroActions}>
+              <TouchableOpacity onPress={refreshProfile} style={styles.heroIconBtn}>
+                <Ionicons name="refresh" size={18} color="rgba(255,255,255,0.85)" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push("/settings")} style={styles.heroIconBtn}>
+                <Ionicons name="settings-outline" size={18} color="rgba(255,255,255,0.85)" />
               </TouchableOpacity>
             </View>
-            {profile?.full_name && (
-              <Text style={styles.emailText} numberOfLines={1}>{user.email}</Text>
-            )}
-            <View style={[styles.levelBadge, { backgroundColor: levelInfo.color + "20" }]}>
-              <Text style={[styles.levelText, { color: levelInfo.color }]}>{levelInfo.title}</Text>
-            </View>
           </View>
-          <View style={styles.scoreBox}>
-            <Text style={[styles.scoreNum, { color: levelInfo.color }]}>{ecoScore}</Text>
-            <Text style={styles.scoreLabel}>ball</Text>
-          </View>
-        </View>
 
-        {/* Eco-score progress */}
-        {profile && levelInfo.nextTitle && (
-          <View style={styles.progressSection}>
-            <View style={styles.progressLabelRow}>
-              <Text style={styles.progressLabel}>Keyingi: {levelInfo.nextTitle}</Text>
-              <Text style={styles.progressNum}>{ecoScore} / {levelInfo.nextMin}</Text>
+          <View style={styles.heroProfile}>
+            <View style={[styles.heroAvatar, { backgroundColor: levelInfo.color + "45" }]}>
+              <Text style={styles.heroAvatarEmoji}>{levelInfo.icon}</Text>
             </View>
-            <View style={styles.progressBar}>
-              <View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: `${Math.round(levelInfo.progress * 100)}%` as any,
-                    backgroundColor: levelInfo.color,
-                  },
-                ]}
-              />
+            <View style={styles.heroInfo}>
+              <View style={styles.heroNameRow}>
+                <Text style={styles.heroName} numberOfLines={1}>{displayName}</Text>
+                <TouchableOpacity onPress={openEditName} style={styles.heroEditBtn}>
+                  <Ionicons name="pencil" size={13} color="rgba(255,255,255,0.75)" />
+                </TouchableOpacity>
+              </View>
+              {profile?.full_name && user?.email && (
+                <Text style={styles.heroEmail} numberOfLines={1}>{user.email}</Text>
+              )}
+              <View style={styles.heroLevelBadge}>
+                <Text style={styles.heroLevelText}>{levelInfo.title}</Text>
+              </View>
+            </View>
+            <View style={styles.heroScoreBox}>
+              <Text style={styles.heroScoreNum}>{displayScore.toLocaleString()}</Text>
+              <Text style={styles.heroScoreLabel}>ball</Text>
             </View>
           </View>
-        )}
 
-        {/* Stats row */}
+          {levelInfo.nextTitle && (
+            <View style={styles.heroProgress}>
+              <View style={styles.heroProgressTop}>
+                <Text style={styles.heroProgressLabel}>Keyingi: {levelInfo.nextTitle}</Text>
+                <Text style={styles.heroProgressNum}>{displayScore} / {levelInfo.nextMin}</Text>
+              </View>
+              <View style={styles.heroProgressTrack}>
+                <Animated.View style={[styles.heroProgressFill, progressBarStyle]} />
+              </View>
+            </View>
+          )}
+        </LinearGradient>
+
+        {/* ─── Stats ─── */}
         <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Ionicons name="alert-circle" size={20} color={C.accent} />
-            <Text style={styles.statNum} numberOfLines={1}>{myReports.length}</Text>
-            <Text style={styles.statLabel} numberOfLines={1}>Xabarlar</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Ionicons name="shield-checkmark" size={20} color="#7C3AED" />
-            <Text style={styles.statNum} numberOfLines={1}>{verificationCount}</Text>
-            <Text style={styles.statLabel} numberOfLines={1}>Tasdiqladi</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Ionicons name="checkmark-circle" size={20} color={C.primary} />
-            <Text style={styles.statNum} numberOfLines={1}>{totalConfirmations}</Text>
-            <Text style={styles.statLabel} numberOfLines={1}>Olingan</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Ionicons name="trophy" size={20} color="#F59E0B" />
-            <Text style={styles.statNum} numberOfLines={1}>{unlockedCount}</Text>
-            <Text style={styles.statLabel} numberOfLines={1}>Yutuqlar</Text>
-          </View>
+          {[
+            { icon: "alert-circle", color: C.accent,    num: myReports.length,    label: "Xabarlar" },
+            { icon: "shield-checkmark", color: "#7C3AED", num: verificationCount, label: "Tasdiqladi" },
+            { icon: "checkmark-circle", color: C.primary, num: totalConfirmations, label: "Olingan" },
+            { icon: "trophy",       color: "#F59E0B",    num: unlockedCount,       label: "Yutuqlar" },
+          ].map((s, i) => (
+            <View key={i} style={styles.statCard}>
+              <Ionicons name={s.icon as any} size={20} color={s.color} />
+              <Text style={styles.statNum} numberOfLines={1}>{s.num}</Text>
+              <Text style={styles.statLabel} numberOfLines={1}>{s.label}</Text>
+            </View>
+          ))}
         </View>
 
-        {/* Achievements */}
+        {/* ─── Achievements ─── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🏅 Yutuqlar</Text>
           <View style={styles.achievementsGrid}>
@@ -309,34 +346,37 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Leaderboard */}
+        {/* ─── Leaderboard ─── */}
         {leaderboard.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🏆 Reyting</Text>
-            <View>
-              {leaderboard.map((entry: any, i: number) => {
-                const isMe = entry.user_id === user.id;
-                const medals = ["🥇", "🥈", "🥉"];
-                const lvl = getLevel(entry.eco_score ?? 0);
-                const name = entry.full_name || (isMe ? displayName : `Foydalanuvchi ${i + 1}`);
-                return (
-                  <View key={entry.user_id} style={[styles.leaderRow, isMe && styles.leaderRowMe, i < leaderboard.length - 1 && styles.leaderBorder]}>
-                    <Text style={styles.leaderRank}>{medals[i] ?? `#${i + 1}`}</Text>
-                    <View style={[styles.leaderAvatar, { backgroundColor: lvl.color }]}>
-                      <Text style={styles.leaderAvatarText}>{lvl.icon}</Text>
-                    </View>
-                    <Text style={[styles.leaderName, isMe && styles.leaderNameMe]} numberOfLines={1}>
-                      {name}
-                    </Text>
-                    <Text style={[styles.leaderScore, { color: lvl.color }]}>{entry.eco_score} ball</Text>
+            {leaderboard.map((entry: any, i: number) => {
+              const isMe = entry.user_id === user.id;
+              const medals = ["🥇", "🥈", "🥉"];
+              const lvl = getLevel(entry.eco_score ?? 0);
+              const name = entry.full_name || (isMe ? displayName : `Foydalanuvchi ${i + 1}`);
+              return (
+                <View
+                  key={entry.user_id}
+                  style={[
+                    styles.leaderRow,
+                    isMe && styles.leaderRowMe,
+                    i < leaderboard.length - 1 && styles.leaderBorder,
+                  ]}
+                >
+                  <Text style={styles.leaderRank}>{medals[i] ?? `#${i + 1}`}</Text>
+                  <View style={[styles.leaderAvatar, { backgroundColor: lvl.color }]}>
+                    <Text style={styles.leaderAvatarText}>{lvl.icon}</Text>
                   </View>
-                );
-              })}
-            </View>
+                  <Text style={[styles.leaderName, isMe && styles.leaderNameMe]} numberOfLines={1}>{name}</Text>
+                  <Text style={[styles.leaderScore, { color: lvl.color }]}>{entry.eco_score} ball</Text>
+                </View>
+              );
+            })}
           </View>
         )}
 
-        {/* Recent reports */}
+        {/* ─── Recent Reports ─── */}
         {myReports.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -369,35 +409,28 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* About section */}
+        {/* ─── About ─── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>ℹ️ Dastur haqida</Text>
-          <View style={styles.aboutRow}>
-            <Ionicons name="person-circle-outline" size={18} color={C.textSecondary} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.aboutLabel}>Muallif</Text>
-              <Text style={styles.aboutValue}>Yursinaliyev Muhammadaziz</Text>
+          {[
+            { icon: "person-circle-outline", label: "Muallif", value: "Yursinaliyev Muhammadaziz" },
+            { icon: "mail-outline",           label: "Aloqa",   value: "yursinaliyevm@gmail.com" },
+            { icon: "leaf-outline",           label: "Versiya", value: "Eco-Xarita v1.0.0" },
+          ].map((row, i, arr) => (
+            <View key={row.label}>
+              <View style={styles.aboutRow}>
+                <Ionicons name={row.icon as any} size={18} color={i === 2 ? C.primary : C.textSecondary} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.aboutLabel}>{row.label}</Text>
+                  <Text style={styles.aboutValue}>{row.value}</Text>
+                </View>
+              </View>
+              {i < arr.length - 1 && <View style={styles.divider} />}
             </View>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.aboutRow}>
-            <Ionicons name="mail-outline" size={18} color={C.textSecondary} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.aboutLabel}>Aloqa</Text>
-              <Text style={styles.aboutValue}>yursinaliyevm@gmail.com</Text>
-            </View>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.aboutRow}>
-            <Ionicons name="leaf-outline" size={18} color={C.primary} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.aboutLabel}>Versiya</Text>
-              <Text style={styles.aboutValue}>Eco-Xarita v1.0.0</Text>
-            </View>
-          </View>
+          ))}
         </View>
 
-        {/* Menu */}
+        {/* ─── Menu ─── */}
         <View style={styles.menuSection}>
           <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/report-modal")}>
             <View style={[styles.menuIcon, { backgroundColor: "#E8F5E9" }]}>
@@ -441,7 +474,7 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
 
-      {/* Edit Name Modal */}
+      {/* ─── Edit Name Modal ─── */}
       <Modal
         visible={editNameVisible}
         transparent
@@ -463,17 +496,10 @@ export default function ProfileScreen() {
               onSubmitEditing={handleSaveName}
             />
             <View style={styles.modalBtns}>
-              <TouchableOpacity
-                style={styles.modalCancelBtn}
-                onPress={() => setEditNameVisible(false)}
-              >
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setEditNameVisible(false)}>
                 <Text style={styles.modalCancelText}>Bekor</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalSaveBtn}
-                onPress={handleSaveName}
-                disabled={savingName}
-              >
+              <TouchableOpacity style={styles.modalSaveBtn} onPress={handleSaveName} disabled={savingName}>
                 {savingName ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
@@ -490,6 +516,7 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.background },
+
   header: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12,
@@ -497,11 +524,6 @@ const styles = StyleSheet.create({
     backgroundColor: C.surface,
   },
   headerTitle: { fontFamily: "Nunito_800ExtraBold", fontSize: 26, color: C.text },
-  headerActions: { flexDirection: "row", gap: 8 },
-  iconBtn: {
-    width: 44, height: 44, borderRadius: 14, backgroundColor: "#F3F4F6",
-    alignItems: "center", justifyContent: "center",
-  },
 
   authPrompt: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32, gap: 14 },
   authIconCircle: {
@@ -514,50 +536,53 @@ const styles = StyleSheet.create({
   authBtn: {
     flexDirection: "row", alignItems: "center", gap: 8,
     marginTop: 8, backgroundColor: C.primary,
-    paddingVertical: 14, paddingHorizontal: 28, borderRadius: 14,
-    ...sh.green,
+    paddingVertical: 14, paddingHorizontal: 28, borderRadius: 14, ...sh.green,
   },
   authBtnText: { fontFamily: "Nunito_700Bold", fontSize: 15, color: "#fff" },
-  settingsLinkRow: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    marginTop: 8, paddingVertical: 8,
-  },
+  settingsLinkRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, paddingVertical: 8 },
   settingsLinkText: { fontFamily: "Nunito_600SemiBold", fontSize: 14, color: C.textSecondary },
 
-  profileCard: {
-    flexDirection: "row", alignItems: "center",
-    backgroundColor: C.surface, padding: 16,
-    marginHorizontal: 14, marginTop: 14, marginBottom: 4,
-    borderRadius: 18, ...sh.md, gap: 12,
+  hero: { paddingHorizontal: 20, paddingBottom: 26 },
+  heroHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 22 },
+  heroTitle: { fontFamily: "Nunito_800ExtraBold", fontSize: 26, color: "#fff" },
+  heroActions: { flexDirection: "row", gap: 8 },
+  heroIconBtn: {
+    width: 40, height: 40, borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    alignItems: "center", justifyContent: "center",
   },
-  avatar: { width: 60, height: 60, borderRadius: 30, alignItems: "center", justifyContent: "center" },
-  avatarText: { fontSize: 28 },
-  profileInfo: { flex: 1, gap: 4 },
-  nameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  nameText: { fontFamily: "Nunito_700Bold", fontSize: 15, color: C.text, flex: 1 },
-  editNameBtn: {
-    width: 24, height: 24, borderRadius: 8,
-    backgroundColor: "#E8F5E9", alignItems: "center", justifyContent: "center",
+  heroProfile: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 22 },
+  heroAvatar: {
+    width: 68, height: 68, borderRadius: 34,
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 2, borderColor: "rgba(255,255,255,0.35)",
   },
-  emailText: { fontFamily: "Nunito_400Regular", fontSize: 11, color: C.textSecondary },
-  levelBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20, alignSelf: "flex-start" },
-  levelText: { fontFamily: "Nunito_600SemiBold", fontSize: 12 },
-  scoreBox: { alignItems: "center" },
-  scoreNum: { fontFamily: "Nunito_800ExtraBold", fontSize: 24 },
-  scoreLabel: { fontFamily: "Nunito_400Regular", fontSize: 12, color: C.textSecondary },
+  heroAvatarEmoji: { fontSize: 32 },
+  heroInfo: { flex: 1, gap: 5 },
+  heroNameRow: { flexDirection: "row", alignItems: "center", gap: 7 },
+  heroName: { fontFamily: "Nunito_700Bold", fontSize: 17, color: "#fff", flex: 1 },
+  heroEditBtn: {
+    width: 28, height: 28, borderRadius: 9,
+    backgroundColor: "rgba(255,255,255,0.22)",
+    alignItems: "center", justifyContent: "center",
+  },
+  heroEmail: { fontFamily: "Nunito_400Regular", fontSize: 12, color: "rgba(255,255,255,0.68)" },
+  heroLevelBadge: {
+    backgroundColor: "rgba(255,255,255,0.22)",
+    paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20, alignSelf: "flex-start",
+  },
+  heroLevelText: { fontFamily: "Nunito_600SemiBold", fontSize: 12, color: "#fff" },
+  heroScoreBox: { alignItems: "center", gap: 1 },
+  heroScoreNum: { fontFamily: "Nunito_800ExtraBold", fontSize: 32, color: "#fff" },
+  heroScoreLabel: { fontFamily: "Nunito_400Regular", fontSize: 13, color: "rgba(255,255,255,0.72)" },
+  heroProgress: { gap: 7 },
+  heroProgressTop: { flexDirection: "row", justifyContent: "space-between" },
+  heroProgressLabel: { fontFamily: "Nunito_600SemiBold", fontSize: 12, color: "rgba(255,255,255,0.78)" },
+  heroProgressNum: { fontFamily: "Nunito_600SemiBold", fontSize: 12, color: "rgba(255,255,255,0.78)" },
+  heroProgressTrack: { height: 7, backgroundColor: "rgba(255,255,255,0.22)", borderRadius: 4, overflow: "hidden" },
+  heroProgressFill: { height: "100%", backgroundColor: "#fff", borderRadius: 4 },
 
-  progressSection: {
-    marginHorizontal: 14, marginBottom: 12,
-    backgroundColor: C.surface, borderRadius: 14, padding: 12,
-    ...sh.sm, gap: 6,
-  },
-  progressLabelRow: { flexDirection: "row", justifyContent: "space-between" },
-  progressLabel: { fontFamily: "Nunito_600SemiBold", fontSize: 12, color: C.textSecondary },
-  progressNum: { fontFamily: "Nunito_600SemiBold", fontSize: 12, color: C.textSecondary },
-  progressBar: { height: 8, backgroundColor: "#E5E7EB", borderRadius: 4, overflow: "hidden" },
-  progressFill: { height: "100%", borderRadius: 4 },
-
-  statsRow: { flexDirection: "row", paddingHorizontal: 14, gap: 6, marginBottom: 14 },
+  statsRow: { flexDirection: "row", paddingHorizontal: 14, gap: 6, marginTop: 14, marginBottom: 14 },
   statCard: {
     flex: 1, backgroundColor: C.surface, borderRadius: 14,
     alignItems: "center", paddingVertical: 12, gap: 3, ...sh.sm, minWidth: 0,
@@ -602,9 +627,7 @@ const styles = StyleSheet.create({
   reportDesc: { fontFamily: "Nunito_600SemiBold", fontSize: 13, color: C.text },
   reportMeta: { fontFamily: "Nunito_400Regular", fontSize: 11, color: C.textSecondary, marginTop: 2 },
 
-  aboutRow: {
-    flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8,
-  },
+  aboutRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8 },
   aboutLabel: { fontFamily: "Nunito_400Regular", fontSize: 11, color: C.textSecondary },
   aboutValue: { fontFamily: "Nunito_600SemiBold", fontSize: 13, color: C.text, marginTop: 1 },
 
@@ -618,19 +641,14 @@ const styles = StyleSheet.create({
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: C.border, marginLeft: 64 },
 
   modalOverlay: {
-    flex: 1, backgroundColor: "rgba(0,0,0,0.45)",
+    flex: 1, backgroundColor: "rgba(0,0,0,0.5)",
     alignItems: "center", justifyContent: "center", padding: 32,
   },
-  modalBox: {
-    backgroundColor: "#fff", borderRadius: 20, padding: 24,
-    width: "100%", gap: 16, ...sh.xl,
-  },
+  modalBox: { backgroundColor: "#fff", borderRadius: 20, padding: 24, width: "100%", gap: 16, ...sh.xl },
   modalTitle: { fontFamily: "Nunito_800ExtraBold", fontSize: 18, color: C.text },
   modalInput: {
-    borderWidth: 1.5, borderColor: C.border,
-    borderRadius: 12, padding: 14,
-    fontFamily: "Nunito_400Regular", fontSize: 15, color: C.text,
-    backgroundColor: "#F9FAFB",
+    borderWidth: 1.5, borderColor: C.border, borderRadius: 12, padding: 14,
+    fontFamily: "Nunito_400Regular", fontSize: 15, color: C.text, backgroundColor: "#F9FAFB",
   },
   modalBtns: { flexDirection: "row", gap: 10 },
   modalCancelBtn: {
@@ -640,8 +658,7 @@ const styles = StyleSheet.create({
   modalCancelText: { fontFamily: "Nunito_600SemiBold", fontSize: 15, color: C.text },
   modalSaveBtn: {
     flex: 1, height: 46, borderRadius: 12,
-    backgroundColor: C.primary, alignItems: "center", justifyContent: "center",
-    ...sh.green,
+    backgroundColor: C.primary, alignItems: "center", justifyContent: "center", ...sh.green,
   },
   modalSaveText: { fontFamily: "Nunito_700Bold", fontSize: 15, color: "#fff" },
 });

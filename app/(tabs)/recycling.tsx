@@ -20,6 +20,7 @@ import * as Location from "expo-location";
 import { supabase } from "@/lib/supabase";
 import type { RecyclingPoint, WasteBin, RecyclingType, ReverseVendingMachine } from "@/lib/supabase";
 import Colors from "@/constants/colors";
+import { SkeletonListItem } from "@/components/Skeleton";
 
 const C = Colors.light;
 
@@ -360,11 +361,21 @@ export default function RecyclingScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.primary]} tintColor={C.primary} />
         }
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <MaterialCommunityIcons name="recycle" size={48} color={C.border} />
-            <Text style={styles.emptyTitle}>Natija topilmadi</Text>
-            <Text style={styles.emptySub}>Qidiruv yoki filterni o'zgartiring</Text>
-          </View>
+          isLoading ? (
+            <View style={styles.skeletonWrap}>
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <View key={i} style={styles.skeletonItem}>
+                  <SkeletonListItem />
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.empty}>
+              <MaterialCommunityIcons name="recycle" size={48} color={C.border} />
+              <Text style={styles.emptyTitle}>Natija topilmadi</Text>
+              <Text style={styles.emptySub}>Qidiruv yoki filterni o'zgartiring</Text>
+            </View>
+          )
         }
         keyboardShouldPersistTaps="handled"
         initialNumToRender={8}
@@ -483,4 +494,7 @@ const styles = StyleSheet.create({
   empty: { alignItems: "center", paddingTop: 48, gap: 8, paddingHorizontal: 24 },
   emptyTitle: { fontFamily: "Nunito_700Bold", fontSize: 18, color: C.text },
   emptySub: { fontFamily: "Nunito_400Regular", fontSize: 14, color: C.textSecondary },
+
+  skeletonWrap: { paddingHorizontal: 16, paddingTop: 4, gap: 10 },
+  skeletonItem: { borderRadius: 16, overflow: "hidden" },
 });

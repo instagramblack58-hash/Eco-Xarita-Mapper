@@ -20,6 +20,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import Colors from "@/constants/colors";
 import { useHaptics } from "@/hooks/useHaptics";
+import { SkeletonShopCard } from "@/components/Skeleton";
 
 const C = Colors.light;
 
@@ -254,7 +255,13 @@ export default function ShopScreen() {
               </ScrollView>
 
               {loadingItems && (
-                <ActivityIndicator color={C.primary} style={{ marginTop: 32 }} />
+                <View style={styles.skeletonGrid}>
+                  {[0, 1, 2, 3].map((i) => (
+                    <View key={i} style={styles.skeletonCardWrap}>
+                      <SkeletonShopCard />
+                    </View>
+                  ))}
+                </View>
               )}
               {!loadingItems && filtered.length === 0 && (
                 <View style={styles.empty}>
@@ -604,4 +611,7 @@ const styles = StyleSheet.create({
   confirmBtnText: { fontFamily: "Nunito_700Bold", fontSize: 16, color: "#fff" },
   cancelBtn: { paddingVertical: 8 },
   cancelText: { fontFamily: "Nunito_600SemiBold", fontSize: 14, color: C.textSecondary },
+
+  skeletonGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 8, paddingBottom: 4 },
+  skeletonCardWrap: { width: "47%", borderRadius: 16, overflow: "hidden" },
 });
