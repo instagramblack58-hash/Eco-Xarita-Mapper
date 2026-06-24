@@ -1,3 +1,3 @@
 - [Skeleton & PressableScale](skeleton-pressablescale.md) — reusable shimmer skeleton + Reanimated press-scale components live in components/; always extract animated items to separate components (never call useAnimatedStyle in .map())
 - [Profile gradient hero](profile-gradient.md) — profile.tsx uses LinearGradient hero with animated eco-score counter (setInterval ease-out) and Reanimated progress bar; no paddingTop on ScrollView, hero handles safe area internally
-- [Auth KAV fix](auth-kav.md) — auth.tsx must import KeyboardAvoidingView from react-native-keyboard-controller, not react-native
+- [KeyboardProvider web guard](keyboard-provider-web.md) — KeyboardProvider from react-native-keyboard-controller must NOT be imported statically at root; use the dynamic-require IIFE pattern (native-only) in _layout.tsx. auth.tsx and report-detail.tsx must use react-native's built-in KeyboardAvoidingView (not keyboard-controller's) because KeyboardProvider is absent on web.
